@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaUserPlus, FaDownload } from 'react-icons/fa'
-import CardPreview, { type CardDesign, CARD_DESIGNS } from '../../../components/CardPreview'
+import CardPreview from '../../../components/CardPreview'
 import { getPublicCard } from '../../../lib/api'
-import type { User } from '../../../lib/types'
+import { CARD_DESIGNS, type CardDesign, type User } from '../../../lib/types'
 
 const NEU_BG = 'bg-[#e2e8f0]'
 const NEU_FLAT = `${NEU_BG} shadow-[6px_6px_14px_#bec9d8,-6px_-6px_14px_#ffffff]`
@@ -32,11 +32,10 @@ export default function PublicCardPage() {
       .then((data) => {
         setUser(data.user)
         setVcf(data.vcf_content)
-        // Эзэмшигчийн сонгосон загварыг backend-ээс ирсэн утгаар харуулна.
-        // `card_design` талбарыг backend/lib/types.ts дээр нэмж, /card хуудсан дээрх
-        // сонголтыг хадгалахдаа энэ талбарт бас бичих шаардлагатай (одоогоор зөвхөн
-        // localStorage-д хадгалагдаж байгаа тул олон төхөөрөмж/зочдод харагдахгүй).
-        const savedDesign = (data.user as { card_design?: CardDesign }).card_design
+        // Эзэмшигчийн /card хуудсан дээр сонгосон загварыг backend-ээс ирсэн
+        // `card_design` талбараар харуулна — иймд QR-аар орж ирсэн хэн ч
+        // яг ижил загварыг харна.
+        const savedDesign = data.user.card_design
         if (savedDesign && CARD_DESIGNS.some((d) => d.id === savedDesign)) {
           setDesign(savedDesign)
         }

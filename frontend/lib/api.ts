@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type {
   CardData,
+  CardDesign,
   LoginResponse,
   QRDesign,
   QRDesignUpdate,
@@ -71,6 +72,15 @@ export async function updateQRDesign(
   update: QRDesignUpdate
 ): Promise<QRDesign> {
   const res = await api.put<QRDesign>('/api/card/qr-design', update)
+  return res.data
+}
+
+// Картын харагдах загварыг (Neumorphic / Cyber Y2K / Abstract Art / Glassmorphism)
+// сервэрт хадгална — ингэснээр QR-аар өөр хүн орж ирэхэд ижил загвар харагдана.
+// Backend талд /api/user/me эсвэл харгалзах endpoint дээр `card_design`
+// талбарыг хүлээж авч, User моделдоо хадгалах шаардлагатай.
+export async function updateCardDesign(design: CardDesign): Promise<User> {
+  const res = await api.put<User>('/api/user/me', { card_design: design })
   return res.data
 }
 

@@ -2,19 +2,16 @@
 
 import type { ReactNode } from 'react'
 import type { User } from '../lib/types'
+import { CARD_DESIGNS, type CardDesign } from '../lib/types'
 import NeumorphicCard from './cards/NeumorphicCard'
 import CyberCard from './cards/CyberCard'
 import AbstractCard from './cards/AbstractCard'
 import GlassCard from './cards/GlassCard'
 
-export type CardDesign = 'neumorphic' | 'cyber' | 'abstract' | 'glass'
-
-export const CARD_DESIGNS: { id: CardDesign; label: string }[] = [
-  { id: 'neumorphic', label: 'Neumorphic' },
-  { id: 'cyber', label: 'Cyber Y2K' },
-  { id: 'abstract', label: 'Abstract Art' },
-  { id: 'glass', label: 'Glassmorphism' },
-]
+// Хуучин код `../components/CardPreview`-с CardDesign/CARD_DESIGNS импортолсоор байгаа
+// тул энд дахин export хийж уялдаа алдагдахаас сэргийлнэ.
+export type { CardDesign }
+export { CARD_DESIGNS }
 
 interface CardPreviewProps {
   user: User | null

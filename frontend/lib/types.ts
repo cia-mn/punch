@@ -26,6 +26,17 @@ export interface QRDesign {
   logo_url?: string
 }
 
+// Картын харагдах загвар — /card дээр сонгоод сервэрт хадгалж,
+// /c/[id] дээр зочдод харагдана.
+export type CardDesign = 'neumorphic' | 'cyber' | 'abstract' | 'glass'
+
+export const CARD_DESIGNS: { id: CardDesign; label: string }[] = [
+  { id: 'neumorphic', label: 'Neumorphic' },
+  { id: 'cyber', label: 'Cyber Y2K' },
+  { id: 'abstract', label: 'Abstract Art' },
+  { id: 'glass', label: 'Glassmorphism' },
+]
+
 export interface User {
   id: string
   name: string
@@ -37,5 +48,6 @@ export interface User {
   avatar_url?: string
   social_links?: Record<string, string>
   qr_design?: QRDesign
+  card_design?: CardDesign
   [key: string]: any // Бусад нэмэлт талбаруудад алдаа заахаас сэргийлнэ
 }
