@@ -20,6 +20,10 @@ class User(Base):
     website = Column(String(255))
     profile_image = Column(Text)
     background_image = Column(Text)
+    # Хэрэглэгчийн сонгосон картын харагдах загвар (neumorphic / cyber / abstract / glass).
+    # /card хуудсанд сонгож "Хадгалах" дарахад энд хадгалагдана, /c/[id] дээр
+    # зочдод харагдана.
+    card_design = Column(String(20), default="neumorphic", server_default="neumorphic")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

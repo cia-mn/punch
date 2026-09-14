@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import text, inspect
 
 from . import models, database, schemas
 from .routers import user_router, card_router
@@ -9,6 +10,40 @@ from .schemas import UserCreate
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
+
+
+def _ensure_card_design_column():
+    """
+    `models.Base.metadata.create_all()` зөвхөн ДУТУУ table-уудыг үүсгэдэг —
+    аль хэдийн байгаа `users` table-д шинэ багана (card_design) автоматаар
+    нэмдэггvй. Иймд эхлэх бvр шалгаад, дутуу бол ALTER TABLE-ээр нэмнэ.
+    Энэ нь зөвхөн SQLite/Postgres-т аюулгvйгээр ажиллана (IF NOT EXISTS
+    дэмждэггvй хуучин SQLite хувилбар байвал try/except-ээр хамгаалав).
+    """
+    inspector = inspect(database.engine)
+    if "users" not in inspector.get_table_names():
+        return  # create_all дөнгөж үvсгэсэн бол багана хэдийнээ орсон байна
+
+    columns = [col["name"] for col in inspector.get_columns("users")]
+    if "card_design" in columns:
+        return
+
+    with database.engine.connect() as conn:
+        try:
+            conn.execute(
+                text(
+                    "ALTER TABLE users ADD COLUMN card_design VARCHAR(20) DEFAULT 'neumorphic'"
+                )
+            )
+            conn.commit()
+            print("[migration] users.card_design багана нэмэгдлээ.")
+        except Exception as e:
+            # Багана аль хэдийн байгаа эсвэл өөр шалтгаанаар алдаа гарвал
+            # апп унтрахгvйгээр лог хэвлээд үргэлжлүүлнэ.
+            print(f"[migration] card_design багана нэмэхэд алдаа гарлаа (үл тоомсорлов): {e}")
+
+
+_ensure_card_design_column()
 
 app = FastAPI(title="Digital Business Card API", version="1.0.0")
 

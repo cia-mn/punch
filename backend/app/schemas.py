@@ -17,6 +17,8 @@ class UserBase(BaseModel):
     website: Optional[str] = None
     profile_image: Optional[str] = None
     background_image: Optional[str] = None
+    # Картын харагдах загвар: neumorphic / cyber / abstract / glass
+    card_design: Optional[str] = "neumorphic"
 
 class UserCreate(UserBase):
     pass
@@ -34,6 +36,7 @@ class UserUpdate(BaseModel):
     website: Optional[str] = None
     profile_image: Optional[str] = None
     background_image: Optional[str] = None
+    card_design: Optional[str] = None
 
 class UserResponse(UserBase):
     id: int
