@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import toast from 'react-hot-toast'
+import type { ReactNode } from 'react'
 import {
   FaFacebookF,
   FaTwitter,
@@ -12,200 +10,241 @@ import {
   FaEnvelope,
   FaGlobe,
   FaMapMarkerAlt,
-  FaUserPlus,
-  FaCopy,
 } from 'react-icons/fa'
-import { getPublicCard } from '../../../lib/api'
-import type { User } from '../../../lib/types'
-import AnimatedTriangleBackground from '../../../components/AnimatedTriangleBackground'
+import type { User } from '../lib/types'
 
-const BRAND_BLUE = '#3266F0'
+interface CardPreviewProps {
+  user: User | null
+  showQr?: boolean
+  qrChildren?: ReactNode
+}
 
-export default function PublicCardPage() {
-  const params = useParams()
-  const id = params?.id as string
-  const [user, setUser] = useState<User | null>(null)
-  const [vcf, setVcf] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+// Neumorphic судлал — Tailwind arbitrary utility-нүүд ашиглав, тусдаа CSS/global style огт хэрэггүй.
+const NEU_BG = 'bg-[#e2e8f0]'
+const NEU_FLAT = `${NEU_BG} shadow-[6px_6px_14px_#bec9d8,-6px_-6px_14px_#ffffff]`
+const NEU_FLAT_SM = `${NEU_BG} shadow-[3px_3px_8px_#bec9d8,-3px_-3px_8px_#ffffff]`
+const NEU_FLAT_LG = `${NEU_BG} shadow-[8px_8px_18px_#bec9d8,-8px_-8px_18px_#ffffff]`
+const NEU_PRESSED = `${NEU_BG} shadow-[inset_4px_4px_8px_#bec9d8,inset_-4px_-4px_8px_#ffffff]`
+const NEU_PRESSED_SM = `${NEU_BG} shadow-[inset_2px_2px_5px_#bec9d8,inset_-2px_-2px_5px_#ffffff]`
 
-  useEffect(() => {
-    if (!id) return
-    getPublicCard(id)
-      .then((data) => {
-        setUser(data.user)
-        setVcf(data.vcf_content)
-      })
-      .catch(() => setError('Карт олдсонгүй'))
-      .finally(() => setLoading(false))
-  }, [id])
-
-  const handleAddContact = () => {
-    if (!vcf) return
-    const blob = new Blob([vcf], { type: 'text/vcard' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${user?.name || 'contact'}.vcf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    toast.success('Харилцагч татагдлаа')
-  }
-
-  const handleCopyVcfText = async () => {
-    if (!vcf) return
-    try {
-      await navigator.clipboard.writeText(vcf)
-      toast.success('Текст хуулагдлаа — Notepad-д буулгаж болно')
-    } catch {
-      toast.error('Хуулахад алдаа гарлаа')
-    }
-  }
-
-  if (loading) {
+export default function CardPreview({ user, showQr = true, qrChildren }: CardPreviewProps) {
+  // Эцэг компонент (CardPage) loading/error төлөвийг барьдаг тул энд зөвхөн
+  // user ирээгvй үед богино skeleton харуулна.
+  if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div
-          className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin"
-          style={{ borderColor: BRAND_BLUE, borderTopColor: 'transparent' }}
-        />
-      </div>
-    )
-  }
-
-  if (error || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-red-100 text-red-700 p-4 rounded-xl">{error || 'Карт олдсонгүй'}</div>
+      <div className={`w-full max-w-[400px] mx-auto rounded-[44px] ${NEU_BG} border border-white/40 shadow-2xl min-h-[500px] flex items-center justify-center`}>
+        <div className={`w-10 h-10 rounded-full ${NEU_PRESSED} border-t-blue-500 border-4 border-transparent animate-spin`} />
       </div>
     )
   }
 
   const socials = [
-    { icon: FaFacebookF, href: user.facebook },
-    { icon: FaTwitter, href: null as string | null },
-    { icon: FaInstagram, href: null as string | null },
-    { icon: FaWhatsapp, href: user.wiber },
+    { icon: FaFacebookF, href: user.facebook, label: 'Facebook', hover: 'group-hover:text-blue-600' },
+    { icon: FaInstagram, href: null as string | null, label: 'Instagram', hover: 'group-hover:text-pink-600' },
+    { icon: FaTwitter, href: null as string | null, label: 'Twitter / X', hover: 'group-hover:text-slate-900' },
+    { icon: FaWhatsapp, href: user.wiber, label: 'WhatsApp', hover: 'group-hover:text-emerald-600' },
   ]
 
   const rows = [
-    user.phone && { icon: FaPhoneAlt, value: user.phone, label: 'Personal' },
-    user.email && { icon: FaEnvelope, value: user.email, label: 'Personal' },
-    user.website && { icon: FaGlobe, value: user.website, label: 'Work' },
-    user.location && { icon: FaMapMarkerAlt, value: user.location, label: 'Work' },
-  ].filter(Boolean) as { icon: React.ComponentType<{ className?: string }>; value: string; label: string }[]
+    user.phone && { icon: FaPhoneAlt, value: user.phone, label: 'Personal', href: `tel:${user.phone}` },
+    user.email && { icon: FaEnvelope, value: user.email, label: 'Personal', href: `mailto:${user.email}` },
+    user.website && { icon: FaGlobe, value: user.website, label: 'Work', href: user.website },
+    user.location && { icon: FaMapMarkerAlt, value: user.location, label: 'Work', href: undefined },
+  ].filter(Boolean) as {
+    icon: React.ComponentType<{ className?: string }>
+    value: string
+    label: string
+    href?: string
+  }[]
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center py-10 px-4 overflow-hidden bg-[#eaf3fb]">
-      {/* Animated low-poly triangle background */}
-      <AnimatedTriangleBackground />
-
-      <div className="relative z-10 w-full max-w-sm rounded-[28px] overflow-hidden shadow-2xl bg-white">
-        <div
-          className="text-white text-center pt-8 pb-16 px-4"
-          style={{ backgroundColor: BRAND_BLUE }}
-        >
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-              <path d="M12 2 3 12l9 10 9-10-9-10zm0 4.2 5.8 5.8L12 17.8 6.2 12 12 6.2z" />
+    <div className={`w-full max-w-[400px] mx-auto rounded-[44px] overflow-hidden ${NEU_BG} border border-slate-300/40 shadow-2xl text-slate-700`}>
+      <div className="px-6 py-5 space-y-5">
+        {/* Top controls (visual-only, static) */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            type="button"
+            className={`${NEU_FLAT_SM} rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-600`}
+          >
+            <span className="text-blue-500 text-sm font-bold leading-none">+</span>
+            <span>Add background picture</span>
+          </button>
+          <button
+            type="button"
+            className={`${NEU_FLAT_SM} rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-600`}
+          >
+            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+              <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
             </svg>
-            <span className="font-bold tracking-wide leading-tight">
-              {(user.company || 'COMPANY').toUpperCase()}
-            </span>
-          </div>
+            <span>Edit</span>
+          </button>
         </div>
 
-        <div className="flex flex-col items-center px-6 -mt-12">
-          <div className="w-24 h-24 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-lg flex items-center justify-center text-2xl font-bold" style={{ color: BRAND_BLUE }}>
-            {user.profile_image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.profile_image} alt={user.name || ''} className="w-full h-full object-cover" />
-            ) : (
-              user.name?.[0]?.toUpperCase() || 'U'
-            )}
+        {/* Profile */}
+        <section className="flex flex-col items-center text-center pt-2">
+          <div className="relative mb-4">
+            <div className={`w-28 h-28 rounded-full ${NEU_FLAT_LG} flex items-center justify-center p-2.5`}>
+              <div className={`w-full h-full rounded-full ${NEU_PRESSED} flex items-center justify-center relative overflow-hidden text-2xl font-bold text-slate-500`}>
+                {user.profile_image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={user.profile_image}
+                    alt={user.name || ''}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  user.name?.[0]?.toUpperCase() || 'U'
+                )}
+              </div>
+            </div>
+            <span
+              className="absolute bottom-1 right-2 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#e2e8f0] shadow-sm"
+              title="Active"
+            />
           </div>
 
-          <h1 className="mt-4 text-xl font-bold text-dark text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800 mb-0.5">
             {user.name || 'Нэргүй хэрэглэгч'}
           </h1>
           {user.title && (
-            <p className="text-gray-400 text-sm text-center mt-0.5">{user.title}</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{user.title}</p>
           )}
           {user.company && (
-            <p className="font-semibold text-dark text-sm text-center mt-1">{user.company}</p>
+            <div className={`${NEU_FLAT_SM} rounded-full px-3.5 py-1 inline-flex items-center gap-1.5`}>
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span className="text-xs font-medium text-slate-600">{user.company}</span>
+            </div>
           )}
+        </section>
 
-          <p className="text-gray-400 text-xs mt-4 mb-3">Connect with me on</p>
-          <div className="flex gap-3 mb-6">
-            {socials.map(({ icon: Icon, href }, i) => (
+        {/* QR code */}
+        {showQr && qrChildren && (
+          <section className="flex justify-center">
+            <div className={`${NEU_PRESSED} p-4 rounded-2xl`}>{qrChildren}</div>
+          </section>
+        )}
+
+        {/* Socials */}
+        <section className="pt-2">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex-1 h-px border-t border-slate-300/60" style={{ boxShadow: '0 1px 0 0 #ffffff' }} />
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase whitespace-nowrap">
+              Connect With Me On
+            </span>
+            <div className="flex-1 h-px border-t border-slate-300/60" style={{ boxShadow: '0 1px 0 0 #ffffff' }} />
+          </div>
+          <div className="flex justify-between items-center px-3">
+            {socials.map(({ icon: Icon, href, label, hover }, i) => (
               <a
                 key={i}
                 href={href || undefined}
-                className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = BRAND_BLUE)}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                aria-label={label}
+                className={`w-13 h-13 p-3 rounded-full ${NEU_FLAT_SM} flex items-center justify-center group active:scale-[0.98] transition-transform`}
               >
-                <Icon className="text-sm" />
+                <Icon className={`w-5 h-5 text-slate-600 ${hover} transition-colors`} />
               </a>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="px-6 pb-6 space-y-3">
+        {/* Contact rows */}
+        <section className="space-y-3.5 pt-1">
           {rows.map((row, i) => (
-            <InfoRow key={i} icon={row.icon} label={row.label} value={row.value} />
+            <InfoRow key={i} icon={row.icon} label={row.label} value={row.value} href={row.href} />
           ))}
-
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={handleAddContact}
-              className="flex-1 flex items-center justify-center gap-2 text-white py-3.5 rounded-full font-semibold hover:opacity-90"
-              style={{ backgroundColor: BRAND_BLUE }}
-            >
-              <FaUserPlus /> Add to Contacts
-            </button>
-            <button
-              onClick={handleCopyVcfText}
-              title="Текстээр хуулах (Notepad-д буулгах)"
-              aria-label="Текстээр хуулах"
-              className="w-14 flex items-center justify-center rounded-full border-2 hover:bg-gray-50 shrink-0"
-              style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
-            >
-              <FaCopy />
-            </button>
-          </div>
-          <p className="text-center text-[11px] text-gray-400 -mt-1">
-            Хажуугийн товч нь мэдээллийг текст хэлбэрээр хуулж, Notepad зэрэгт буулгах боломжтой
-          </p>
-        </div>
+        </section>
       </div>
+
+      {/* Bottom action deck */}
+      <footer className="p-6 pt-3 pb-7 space-y-4">
+        <div className="grid grid-cols-2 gap-3.5">
+          <button
+            type="button"
+            className="bg-gradient-to-br from-[#3f88fc] to-[#3575dd] text-white font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs tracking-wide shadow-[5px_5px_14px_#a9b8cc,-4px_-4px_12px_#ffffff] active:scale-[0.98] transition-transform"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.2"
+              />
+            </svg>
+            <span>Add Contact</span>
+          </button>
+          <button
+            type="button"
+            className={`${NEU_FLAT} text-slate-700 font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs tracking-wide border border-white/40 active:scale-[0.98] transition-transform`}
+          >
+            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.2"
+              />
+            </svg>
+            <span>VCF Contact</span>
+          </button>
+        </div>
+        <div className={`w-32 h-1 ${NEU_PRESSED} mx-auto rounded-full opacity-75 mt-2`} />
+      </footer>
     </div>
   )
+}
 
-  function InfoRow({
-    icon: Icon,
-    label,
-    value,
-  }: {
-    icon: React.ComponentType<{ className?: string }>
-    label: string
-    value: string
-  }) {
-    return (
-      <div className="flex items-center gap-3 border border-gray-100 rounded-xl px-4 py-3">
-        <div
-          className="w-9 h-9 rounded-full border flex items-center justify-center shrink-0"
-          style={{ borderColor: BRAND_BLUE, color: BRAND_BLUE }}
-        >
-          <Icon className="text-sm" />
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+  href,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string
+  href?: string
+}) {
+  const content = (
+    <>
+      <div className="flex items-center gap-3.5 min-w-0">
+        <div className={`w-10 h-10 rounded-xl ${NEU_PRESSED_SM} flex items-center justify-center shrink-0 text-slate-600`}>
+          <Icon className="w-5 h-5" />
         </div>
-        <div>
-          <div className="text-sm text-dark font-medium">{value}</div>
-          <div className="text-xs text-gray-400">{label}</div>
+        <div className="text-left truncate">
+          <h2 className="text-sm font-bold text-slate-800 leading-tight truncate">{value}</h2>
+          <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">{label}</span>
         </div>
       </div>
+      <div className="pr-1 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" />
+        </svg>
+      </div>
+    </>
+  )
+
+  const classes = `w-full ${NEU_FLAT} rounded-2xl p-3 flex items-center justify-between group cursor-pointer active:scale-[0.98] transition-transform`
+
+  if (href) {
+    return (
+      <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={classes}>
+        {content}
+      </a>
     )
   }
+
+  return <div className={classes}>{content}</div>
 }

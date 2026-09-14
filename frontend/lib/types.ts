@@ -1,5 +1,3 @@
-// Add/merge this into lib/types.ts
-
 export type DotStyleKey =
   | 'square'
   | 'dots'
@@ -21,15 +19,23 @@ export type EyeStyleKey =
   | 'dot_square'
 
 export interface QRDesign {
-  qr_color?: string
-  qr_bg_color?: string
-  qr_size?: number
-  qr_logo?: string | null
-  // New fields — must also exist on the backend model/serializer
   dot_style?: DotStyleKey
   eye_style?: EyeStyleKey
-  corner_frame_color?: string
-  corner_dot_color?: string
-  add_white_frame?: boolean
-  logo_size?: number
+  color?: string
+  bg_color?: string
+  logo_url?: string
+}
+
+export interface User {
+  id: string
+  name: string
+  title?: string
+  company?: string
+  email?: string
+  phone?: string
+  bio?: string
+  avatar_url?: string
+  social_links?: Record<string, string>
+  qr_design?: QRDesign
+  [key: string]: any // Бусад нэмэлт талбаруудад алдаа заахаас сэргийлнэ
 }
