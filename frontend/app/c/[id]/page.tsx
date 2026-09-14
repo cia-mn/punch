@@ -64,18 +64,14 @@ export default function PublicCardPage() {
     toast.success('Харилцагч татагдлаа')
   }
 
-  const handleDownloadVcfFile = () => {
+  const handleCopyVcfText = async () => {
     if (!vcf) return
-    const blob = new Blob([vcf], { type: 'text/vcard' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${user?.name || 'contact'}.vcf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    toast.success('VCF файл татагдлаа')
+    try {
+      await navigator.clipboard.writeText(vcf)
+      toast.success('Текст хуулагдлаа — Notepad-д буулгаж болно')
+    } catch {
+      toast.error('Хуулахад алдаа гарлаа')
+    }
   }
 
   if (loading) {
@@ -200,12 +196,17 @@ export default function PublicCardPage() {
               <FaUserPlus /> Add Contact
             </button>
             <button
-              onClick={handleDownloadVcfFile}
+              onClick={handleCopyVcfText}
+              title="Текстээр хуулах (Notepad-д буулгах)"
+              aria-label="Текстээр хуулах"
               className={`${NEU_FLAT} text-slate-700 font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm tracking-wide border border-white/40 active:scale-[0.98] transition-transform`}
             >
               <FaDownload className="text-slate-500" /> VCF Contact
             </button>
           </div>
+          <p className="text-center text-[10px] text-slate-400 mt-2">
+            "VCF Contact" товч нь мэдээллийг текст хэлбэрээр хуулж, Notepad зэрэгт буулгах боломжтой
+          </p>
         </div>
       </div>
     </div>
