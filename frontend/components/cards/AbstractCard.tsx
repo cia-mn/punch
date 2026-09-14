@@ -2,7 +2,7 @@
 
 import { getRows, getSocials, initials, type CardTemplateProps, type RowItem } from './shared'
 
-export default function AbstractCard({ user, showQr = true, qrChildren }: CardTemplateProps) {
+export default function AbstractCard({ user, showQr = true, qrChildren, onAddContact, onVcfContact }: CardTemplateProps) {
   const socials = getSocials(user)
   const rows = getRows(user)
 
@@ -120,6 +120,7 @@ export default function AbstractCard({ user, showQr = true, qrChildren }: CardTe
         <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
           <button
             type="button"
+            onClick={onAddContact}
             className="group relative flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-white font-semibold text-xs tracking-wider shadow-lg active:scale-95 transition-all duration-150 overflow-hidden"
             style={{ background: 'linear-gradient(to right, #C85A32, #FF5733, #FF8A65)' }}
           >
@@ -130,6 +131,7 @@ export default function AbstractCard({ user, showQr = true, qrChildren }: CardTe
           </button>
           <button
             type="button"
+            onClick={onVcfContact}
             className="group flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white/90 border border-orange-700/30 text-orange-700 font-semibold text-xs tracking-wider shadow-sm active:scale-95 transition-all duration-150"
           >
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">

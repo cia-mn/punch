@@ -9,7 +9,7 @@ const NEU_FLAT_LG = `${NEU_BG} shadow-[8px_8px_18px_#bec9d8,-8px_-8px_18px_#ffff
 const NEU_PRESSED = `${NEU_BG} shadow-[inset_4px_4px_8px_#bec9d8,inset_-4px_-4px_8px_#ffffff]`
 const NEU_PRESSED_SM = `${NEU_BG} shadow-[inset_2px_2px_5px_#bec9d8,inset_-2px_-2px_5px_#ffffff]`
 
-export default function NeumorphicCard({ user, showQr = true, qrChildren }: CardTemplateProps) {
+export default function NeumorphicCard({ user, showQr = true, qrChildren, onAddContact, onVcfContact }: CardTemplateProps) {
   const socials = getSocials(user)
   const rows = getRows(user)
 
@@ -112,6 +112,7 @@ export default function NeumorphicCard({ user, showQr = true, qrChildren }: Card
         <div className="grid grid-cols-2 gap-3.5">
           <button
             type="button"
+            onClick={onAddContact}
             className="bg-gradient-to-br from-[#3f88fc] to-[#3575dd] text-white font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs tracking-wide shadow-[5px_5px_14px_#a9b8cc,-4px_-4px_12px_#ffffff] active:scale-[0.98] transition-transform"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,6 +127,7 @@ export default function NeumorphicCard({ user, showQr = true, qrChildren }: Card
           </button>
           <button
             type="button"
+            onClick={onVcfContact}
             className={`${NEU_FLAT} text-slate-700 font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs tracking-wide border border-white/40 active:scale-[0.98] transition-transform`}
           >
             <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

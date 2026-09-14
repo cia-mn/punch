@@ -51,3 +51,25 @@ export interface User {
   card_design?: CardDesign
   [key: string]: any // Бусад нэмэлт талбаруудад алдаа заахаас сэргийлнэ
 }
+
+// api.ts дотор ашиглагддаг ч энд алга байсан төрлүүд — эдгээр байхгvй
+// байснаас болж TypeScript compile хийхгvй, төслийг ажиллуулах боломжгvй
+// болгодог байсан. (импортлогдсон боловч экспортлогдоогvй байсан.)
+
+export interface LoginResponse {
+  token: string
+  user: User
+}
+
+// Хэрэглэгчийн мэдээллийг хэсэгчлэн шинэчлэхэд ашиглана (PUT /api/user/me)
+export type UserUpdate = Partial<User>
+
+// QR дизайныг хэсэгчлэн шинэчлэхэд ашиглана (PUT /api/card/qr-design)
+export type QRDesignUpdate = Partial<QRDesign>
+
+// /card хуудсанд ашиглагддаг нэгтгэсэн дата бүтэц
+export interface CardData {
+  user: User
+  text_content?: string
+  qr_design?: QRDesign
+}

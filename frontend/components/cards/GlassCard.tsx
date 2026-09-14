@@ -2,7 +2,7 @@
 
 import { getRows, getSocials, initials, type CardTemplateProps, type RowItem } from './shared'
 
-export default function GlassCard({ user, showQr = true, qrChildren }: CardTemplateProps) {
+export default function GlassCard({ user, showQr = true, qrChildren, onAddContact, onVcfContact }: CardTemplateProps) {
   const socials = getSocials(user)
   const rows = getRows(user)
 
@@ -105,6 +105,7 @@ export default function GlassCard({ user, showQr = true, qrChildren }: CardTempl
         <div className="flex items-center gap-3">
           <button
             type="button"
+            onClick={onAddContact}
             className="flex-1 py-3 px-4 rounded-2xl border border-white/50 text-white font-semibold text-[13.5px] tracking-wide flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all"
             style={{
               background: 'linear-gradient(to right, rgba(219,39,119,0.9), rgba(244,63,94,0.9), rgba(147,51,234,0.9))',
@@ -121,6 +122,7 @@ export default function GlassCard({ user, showQr = true, qrChildren }: CardTempl
           </button>
           <button
             type="button"
+            onClick={onVcfContact}
             className="flex-1 py-3 px-4 rounded-2xl text-white font-semibold text-[13.5px] tracking-wide flex items-center justify-center gap-2 hover:bg-white/25 active:scale-[0.98] transition-all"
             style={glassPanel}
           >

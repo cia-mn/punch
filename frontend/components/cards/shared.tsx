@@ -15,6 +15,8 @@ export interface CardTemplateProps {
   user: User
   showQr?: boolean
   qrChildren?: ReactNode
+  onAddContact?: () => void
+  onVcfContact?: () => void
 }
 
 export interface SocialItem {

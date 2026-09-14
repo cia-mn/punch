@@ -2,7 +2,7 @@
 
 import { getRows, getSocials, initials, type CardTemplateProps, type RowItem } from './shared'
 
-export default function CyberCard({ user, showQr = true, qrChildren }: CardTemplateProps) {
+export default function CyberCard({ user, showQr = true, qrChildren, onAddContact, onVcfContact }: CardTemplateProps) {
   const socials = getSocials(user)
   const rows = getRows(user)
 
@@ -144,7 +144,8 @@ export default function CyberCard({ user, showQr = true, qrChildren }: CardTempl
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            className="h-12 rounded-2xl flex items-center justify-center gap-2 text-white font-bold text-sm tracking-wider"
+            onClick={onAddContact}
+            className="h-12 rounded-2xl flex items-center justify-center gap-2 text-white font-bold text-sm tracking-wider active:scale-[0.97] transition-transform"
             style={{
               background: 'linear-gradient(180deg, #67e8f9 0%, #38bdf8 38%, #6366f1 78%, #a855f7 100%)',
               boxShadow:
@@ -161,7 +162,8 @@ export default function CyberCard({ user, showQr = true, qrChildren }: CardTempl
           </button>
           <button
             type="button"
-            className="h-12 rounded-2xl flex items-center justify-center gap-2 text-slate-800 font-bold text-sm tracking-wider"
+            onClick={onVcfContact}
+            className="h-12 rounded-2xl flex items-center justify-center gap-2 text-slate-800 font-bold text-sm tracking-wider active:scale-[0.97] transition-transform"
             style={{
               background: 'linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(240,245,255,0.5) 100%)',
               border: '1.5px solid rgba(255,255,255,0.9)',

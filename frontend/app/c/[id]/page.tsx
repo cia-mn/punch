@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaUserPlus, FaDownload } from 'react-icons/fa'
 import CardPreview from '../../../components/CardPreview'
 import { getPublicCard } from '../../../lib/api'
 import { CARD_DESIGNS, type CardDesign, type User } from '../../../lib/types'
@@ -85,26 +84,19 @@ export default function PublicCardPage() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center py-10 px-4 ${NEU_BG} gap-5`}>
-      <CardPreview user={user} showQr={false} design={design} />
-
-      <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-        <button
-          onClick={handleAddContact}
-          className="bg-gradient-to-br from-[#3f88fc] to-[#3575dd] text-white font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm tracking-wide shadow-[5px_5px_14px_#a9b8cc,-4px_-4px_12px_#ffffff] active:scale-[0.98] transition-transform"
-        >
-          <FaUserPlus /> Add Contact
-        </button>
-        <button
-          onClick={handleCopyVcfText}
-          title="Текстээр хуулах (Notepad-д буулгах)"
-          aria-label="Текстээр хуулах"
-          className={`${NEU_FLAT} text-slate-700 font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-xs sm:text-sm tracking-wide border border-white/40 active:scale-[0.98] transition-transform`}
-        >
-          <FaDownload className="text-slate-500" /> VCF Contact
-        </button>
-      </div>
-      <p className="text-center text-[10px] text-slate-400 -mt-2">
+    <div className={`min-h-screen flex flex-col items-center justify-center py-10 px-4 ${NEU_BG} gap-3`}>
+      {/* Загвар бүрийн доод хэсэгт "Add Contact" / "VCF Contact" товч аль хэдийн
+          байгаа тул энд давхардуулж дахин зурахгvй — харин зочны хуудсанд зөв
+          (getPublicCard-аас ирсэн) vcf өгөгдлийг ашиглахын тулд handler-уудыг
+          шууд дамжуулна. */}
+      <CardPreview
+        user={user}
+        showQr={false}
+        design={design}
+        onAddContact={handleAddContact}
+        onVcfContact={handleCopyVcfText}
+      />
+      <p className="text-center text-[10px] text-slate-400 mt-1">
         &quot;VCF Contact&quot; товч нь мэдээллийг текст хэлбэрээр хуулж, Notepad зэрэгт буулгах боломжтой
       </p>
     </div>
