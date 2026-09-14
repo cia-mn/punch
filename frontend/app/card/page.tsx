@@ -5,16 +5,19 @@ import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaThLarge, FaDownload, FaIdCard, FaFileAlt, FaCopy } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
-import CardPreview from '../../components/CardPreview'
+import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
 import { getCardData, getVcf, getTextContent } from '../../lib/api'
 import type { CardData } from '../../lib/types'
+
+const DESIGN_STORAGE_KEY = 'card_design'
 
 export default function CardPage() {
   const [data, setData] = useState<CardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showQr, setShowQr] = useState(true)
   const [textContent, setTextContent] = useState('')
+  const [design, setDesign] = useState<CardDesign>('neumorphic')
   const router = useRouter()
 
   useEffect(() => {
@@ -23,6 +26,13 @@ export default function CardPage() {
     if (!token) {
       router.push('/login')
       return
+    }
+
+    // Хэрэглэгчийн сүүлд сонгосон загварыг сэргээнэ (browser-т хадгалагдсан байдаг).
+    const savedDesign =
+      typeof window !== 'undefined' ? (localStorage.getItem(DESIGN_STORAGE_KEY) as CardDesign | null) : null
+    if (savedDesign && CARD_DESIGNS.some((d) => d.id === savedDesign)) {
+      setDesign(savedDesign)
     }
 
     getCardData()
@@ -40,6 +50,13 @@ export default function CardPage() {
     typeof window !== 'undefined' && data
       ? `${window.location.origin}/c/${data.user.id}`
       : ''
+
+  const handleSelectDesign = (id: CardDesign) => {
+    setDesign(id)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DESIGN_STORAGE_KEY, id)
+    }
+  }
 
   const handleDownloadQr = () => {
     const svg = document.getElementById('card-qr-svg')
@@ -97,9 +114,32 @@ export default function CardPage() {
 
           <div className="grid lg:grid-cols-[400px_1fr] gap-6 items-start">
             <div>
+              {/* Template selector — сонгосон даруйд баруун талын preview шууд шинэчлэгдэнэ */}
+              <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+                <h2 className="text-sm font-semibold text-dark mb-3">Загвар сонгох</h2>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {CARD_DESIGNS.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => handleSelectDesign(d.id)}
+                      aria-pressed={design === d.id}
+                      className={`px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                        design === d.id
+                          ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/30'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <CardPreview
                 user={data?.user || null}
                 showQr={showQr}
+                design={design}
                 qrChildren={
                   data ? (
                     <QRCode
