@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaThLarge, FaDownload, FaIdCard, FaFileAlt, FaCopy } from 'react-icons/fa'
+import { FaThLarge } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
 import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
-import { getCardData, getVcf, getTextContent, updateCardDesign } from '../../lib/api'
+import { getCardData, updateCardDesign } from '../../lib/api'
 import type { CardData } from '../../lib/types'
 
 const DESIGN_STORAGE_KEY = 'card_design'
@@ -16,7 +16,6 @@ export default function CardPage() {
   const [data, setData] = useState<CardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showQr, setShowQr] = useState(true)
-  const [textContent, setTextContent] = useState('')
   const [design, setDesign] = useState<CardDesign>('neumorphic')
   const [savedDesign, setSavedDesign] = useState<CardDesign | null>(null)
   const [saving, setSaving] = useState(false)
@@ -43,7 +42,6 @@ export default function CardPage() {
     getCardData()
       .then((d) => {
         setData(d)
-        setTextContent(d.text_content || '')
         // Сервэрт хадгалагдсан загвар байвал (өмнө нь "Хадгалах" дарсан бол)
         // тэрийг эх сурвалж болгоно — localStorage-с давуу эрхтэй.
         const serverDesign = d.user?.card_design
@@ -92,41 +90,6 @@ export default function CardPage() {
     }
   }
 
-  const handleDownloadQr = () => {
-    const svg = document.getElementById('card-qr-svg')
-    if (!svg) return
-    const svgData = new XMLSerializer().serializeToString(svg)
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(svgBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'qr-code.svg'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    toast.success('QR код татагдлаа')
-  }
-
-  const handleDownloadVcf = async () => {
-    try {
-      const { content, filename } = await getVcf()
-      downloadFile(content, filename || 'contact.vcf', 'text/vcard')
-      toast.success('vCard татагдлаа')
-    } catch {
-      toast.error('Татахад алдаа гарлаа')
-    }
-  }
-
-  const handleCopyText = async () => {
-    try {
-      await navigator.clipboard.writeText(textContent)
-      toast.success('Хууллаа')
-    } catch {
-      toast.error('Хуулахад алдаа гарлаа')
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -146,7 +109,7 @@ export default function CardPage() {
             <FaThLarge className="text-primary" /> Миний Карт &amp; QR
           </h1>
 
-          <div className="grid lg:grid-cols-[400px_1fr] gap-6 items-start">
+          <div className="max-w-[400px] mx-auto">
             <div>
               {/* Template selector — сонгосон даруйд баруун талын preview шууд шинэчлэгдэнэ,
                   гэхдээ "Хадгалах" дарж байж бусдад (/c/[id]) харагдана */}
@@ -222,72 +185,9 @@ export default function CardPage() {
               </div>
               <p className="text-center text-xs text-gray-400 mt-1">QR кодыг нуух / харуулах</p>
             </div>
-
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="flex items-center gap-2 font-semibold text-dark mb-1">
-                  <FaDownload className="text-secondary" /> QR код татаж авах
-                </h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  QR кодын зургийг татаж авах бол доорх товчийг дарна уу.
-                </p>
-                <button
-                  onClick={handleDownloadQr}
-                  className="flex items-center gap-2 bg-gradient-to-r from-secondary to-pink-400 text-white px-5 py-3 rounded-full font-medium hover:opacity-90"
-                >
-                  <FaDownload /> QR татаж авах
-                </button>
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="flex items-center gap-2 font-semibold text-dark mb-1">
-                  <FaIdCard className="text-primary" /> VCF файл татаж авах
-                </h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  Холбоо барих мэдээллийг VCF форматаар татаж авах
-                </p>
-                <button
-                  onClick={handleDownloadVcf}
-                  className="flex items-center gap-2 bg-primary text-white px-5 py-3 rounded-full font-medium hover:bg-primary/90"
-                >
-                  <FaDownload /> VCF татаж авах
-                </button>
-              </div>
-
-              <hr className="border-gray-200" />
-
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="flex items-center gap-2 font-semibold text-dark mb-3">
-                  <FaFileAlt className="text-gray-500" /> Текст хэлбэрээр харах
-                </h2>
-                <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600 whitespace-pre-wrap font-mono overflow-x-auto">
-                  {textContent}
-                </pre>
-                <button
-                  onClick={handleCopyText}
-                  className="mt-4 flex items-center gap-2 text-primary text-sm font-medium hover:underline"
-                >
-                  <FaCopy /> Хуулах
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
   )
-}
-
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
 }
