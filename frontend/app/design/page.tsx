@@ -12,6 +12,12 @@ import {
   FaInfoCircle,
 } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
+import PrintCardPreview, {
+  PRINT_CARD_DEFAULTS,
+  loadPrintCardDesign,
+  savePrintCardDesign,
+  type PrintCardDesign,
+} from '../../components/PrintCardPreview'
 import type { ExtendedQRDesign as QRDesignStyle, QRCodeHandle } from '../../components/QRCode'
 import { getCurrentUser, getQRDesign, updateQRDesign } from '../../lib/api'
 import type { QRDesign, User } from '../../lib/types'
@@ -93,6 +99,8 @@ export default function DesignPage() {
   const [design, setDesign] = useState<ExtendedQRDesign | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [printCard, setPrintCard] = useState<PrintCardDesign>(PRINT_CARD_DEFAULTS)
+  const [printCardSaved, setPrintCardSaved] = useState(true)
   const router = useRouter()
   const qrRef = useRef<QRCodeHandle>(null)
 
@@ -111,6 +119,8 @@ export default function DesignPage() {
       })
       .catch(() => toast.error('Мэдээлэл авахад алдаа гарлаа'))
       .finally(() => setLoading(false))
+
+    setPrintCard(loadPrintCardDesign())
   }, [router])
 
   const handleChange = <K extends keyof ExtendedQRDesign>(key: K, value: ExtendedQRDesign[K]) => {
@@ -143,6 +153,22 @@ export default function DesignPage() {
 
   const handleReset = () => {
     setDesign((prev) => (prev ? { ...prev, ...DEFAULTS } : prev))
+  }
+
+  const handlePrintCardChange = <K extends keyof PrintCardDesign>(key: K, value: PrintCardDesign[K]) => {
+    setPrintCard((prev) => ({ ...prev, [key]: value }))
+    setPrintCardSaved(false)
+  }
+
+  const handleSavePrintCard = () => {
+    savePrintCardDesign(printCard)
+    setPrintCardSaved(true)
+    toast.success('Хэвлэмэл картын тохиргоо хадгалагдлаа')
+  }
+
+  const handleResetPrintCard = () => {
+    setPrintCard(PRINT_CARD_DEFAULTS)
+    setPrintCardSaved(false)
   }
 
   const handleDownload = () => {
@@ -417,6 +443,120 @@ export default function DesignPage() {
               <div className="mt-4 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
                 <FaInfoCircle className="mt-0.5 shrink-0" />
                 Хадгалахад QR зураг дахин үүснэ. Уншуулах URL нь өөрчлөгдөхгүй.
+              </div>
+            </div>
+          </div>
+
+          {/* Хэвлэмэл (физик) картын тохиргоо */}
+          <div className="mt-8">
+            <h2 className="flex items-center gap-3 text-xl font-bold text-dark mb-1">
+              <FaPaintBrush className="text-primary" /> Хэвлэмэл картын дизайн
+            </h2>
+            <p className="text-gray-500 text-sm mb-6">
+              &quot;Миний Карт&quot; хуудсан дээр харагдах хэвлэмэл картын өнгө, чиглэлийг тохируулах
+            </p>
+
+            <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
+              <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
+                <section>
+                  <h3 className="font-semibold text-dark text-sm mb-4">Чиглэл</h3>
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-full p-1 w-fit">
+                    <button
+                      type="button"
+                      onClick={() => handlePrintCardChange('orientation', 'horizontal')}
+                      aria-pressed={printCard.orientation === 'horizontal'}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        printCard.orientation === 'horizontal'
+                          ? 'bg-white shadow-sm text-primary'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      ▭ Хэвтээ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePrintCardChange('orientation', 'vertical')}
+                      aria-pressed={printCard.orientation === 'vertical'}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        printCard.orientation === 'vertical'
+                          ? 'bg-white shadow-sm text-primary'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      ▯ Босоо
+                    </button>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="font-semibold text-dark text-sm mb-4">Өнгөний тохиргоо</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <ColorField
+                      label="Дэвсгэр (эхлэл)"
+                      value={printCard.bg_from}
+                      onChange={(v) => handlePrintCardChange('bg_from', v)}
+                    />
+                    <ColorField
+                      label="Дэвсгэр (төгсгөл)"
+                      value={printCard.bg_to}
+                      onChange={(v) => handlePrintCardChange('bg_to', v)}
+                    />
+                    <ColorField
+                      label="Тодотгол (accent)"
+                      value={printCard.accent_color}
+                      onChange={(v) => handlePrintCardChange('accent_color', v)}
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-gray-500 mt-5 mb-2 tracking-wide uppercase">
+                    Бэлэн загварууд
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {PRESET_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => handlePrintCardChange('accent_color', c)}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          printCard.accent_color === c ? 'border-primary' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: c }}
+                        aria-label={c}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                <div className="flex items-center gap-3">
+                  {!printCardSaved && (
+                    <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
+                      Хадгалагдаагvй өөрчлөлт
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleResetPrintCard}
+                  className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-full font-semibold hover:bg-primary/90"
+                >
+                  <FaUndo /> Анхны төлөв рүү буцаах
+                </button>
+
+                <button
+                  onClick={handleSavePrintCard}
+                  disabled={printCardSaved}
+                  className="w-full flex items-center justify-center gap-2 bg-dark text-white py-3 rounded-full font-semibold hover:bg-dark/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {printCardSaved ? 'Хадгалагдсан' : 'Хадгалах'}
+                </button>
+              </div>
+
+              <div className="lg:sticky lg:top-6">
+                <PrintCardPreview
+                  user={user}
+                  design={printCard}
+                  controlled
+                  onOrientationChange={(o) => handlePrintCardChange('orientation', o)}
+                />
               </div>
             </div>
           </div>

@@ -1,13 +1,55 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { User } from '../lib/types'
+
+export type PrintCardOrientation = 'horizontal' | 'vertical'
+
+export interface PrintCardDesign {
+  orientation: PrintCardOrientation
+  bg_from: string
+  bg_to: string
+  accent_color: string
+}
+
+export const PRINT_CARD_STORAGE_KEY = 'print_card_design'
+
+export const PRINT_CARD_DEFAULTS: PrintCardDesign = {
+  orientation: 'horizontal',
+  bg_from: '#0f172a',
+  bg_to: '#3f3f9e',
+  accent_color: '#38bdf8',
+}
+
+// /design хуудсан дээр хэрэглэгч тохируулсан хэвлэмэл картын өнгө/чиглэлийг
+// browser-с уншина (backend талбар нэмэгдэхээс өмнө түр зуурын шийдэл).
+export function loadPrintCardDesign(): PrintCardDesign {
+  if (typeof window === 'undefined') return PRINT_CARD_DEFAULTS
+  try {
+    const raw = localStorage.getItem(PRINT_CARD_STORAGE_KEY)
+    if (!raw) return PRINT_CARD_DEFAULTS
+    return { ...PRINT_CARD_DEFAULTS, ...JSON.parse(raw) }
+  } catch {
+    return PRINT_CARD_DEFAULTS
+  }
+}
+
+export function savePrintCardDesign(design: PrintCardDesign) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(PRINT_CARD_STORAGE_KEY, JSON.stringify(design))
+}
 
 interface PrintCardPreviewProps {
   user: User | null
+  // Заавал биш: өгвөл эдгээр утгыг ашиглана (жишээ нь /design хуудсан дээр
+  // тохируулж байгаа тухайн үеийн утгыг шууд харуулах). Өгөгдөхгvй бол
+  // localStorage-с (эсвэл өгөгдмөл утгаас) уншина.
+  design?: PrintCardDesign
+  onOrientationChange?: (orientation: PrintCardOrientation) => void
+  // Хэрэв true бол дотоод localStorage-с УНШИХГVЙ — гадны `design` prop-ыг
+  // шууд ашиглана (энэ нь /design хуудсан дээрх LIVE preview-д хэрэгтэй).
+  controlled?: boolean
 }
-
-type Orientation = 'horizontal' | 'vertical'
 
 function initials(name?: string) {
   return name?.[0]?.toUpperCase() || 'U'
@@ -16,12 +58,32 @@ function initials(name?: string) {
 // Хэвлэмэл (физик) бизнес картны харагдацыг дуурайлган үзүүлэх preview.
 // Лого баруун талд, нэр/мэдээлэл зүүн доод буланд байрлана — жинхэнэ
 // хэвлэгдсэн картны стандарт зохион байгуулалт.
-export default function PrintCardPreview({ user }: PrintCardPreviewProps) {
-  const [orientation, setOrientation] = useState<Orientation>('horizontal')
+export default function PrintCardPreview({
+  user,
+  design,
+  onOrientationChange,
+  controlled = false,
+}: PrintCardPreviewProps) {
+  const [localDesign, setLocalDesign] = useState<PrintCardDesign>(PRINT_CARD_DEFAULTS)
+
+  useEffect(() => {
+    if (!controlled) {
+      setLocalDesign(loadPrintCardDesign())
+    }
+  }, [controlled])
 
   if (!user) return null
 
-  const isHorizontal = orientation === 'horizontal'
+  const active = controlled ? design || PRINT_CARD_DEFAULTS : localDesign
+  const isHorizontal = active.orientation === 'horizontal'
+
+  const setOrientation = (o: PrintCardOrientation) => {
+    if (onOrientationChange) {
+      onOrientationChange(o)
+    } else {
+      setLocalDesign((prev) => ({ ...prev, orientation: o }))
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -57,19 +119,19 @@ export default function PrintCardPreview({ user }: PrintCardPreviewProps) {
           style={{
             width: isHorizontal ? 340 : 220,
             aspectRatio: isHorizontal ? '1.68 / 1' : '0.6 / 1',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #3f3f9e 100%)',
+            background: `linear-gradient(135deg, ${active.bg_from} 0%, #1e293b 45%, ${active.bg_to} 100%)`,
           }}
         >
           {/* Дэвсгэр чимэглэл */}
           <div
             aria-hidden
             className="absolute -top-10 -left-10 w-40 h-40 rounded-full opacity-30 blur-2xl"
-            style={{ background: 'radial-gradient(circle, #6366f1, transparent 70%)' }}
+            style={{ background: `radial-gradient(circle, ${active.accent_color}, transparent 70%)` }}
           />
           <div
             aria-hidden
             className="absolute -bottom-12 -right-8 w-44 h-44 rounded-full opacity-25 blur-2xl"
-            style={{ background: 'radial-gradient(circle, #38bdf8, transparent 70%)' }}
+            style={{ background: `radial-gradient(circle, ${active.accent_color}, transparent 70%)` }}
           />
 
           {/* Дээд зүүн буланд компанийн нэр / тодотгол */}
@@ -82,9 +144,7 @@ export default function PrintCardPreview({ user }: PrintCardPreviewProps) {
           )}
 
           {/* Баруун талд лого / профайл зураг */}
-          <div
-            className={`absolute ${isHorizontal ? 'top-4 right-4' : 'top-4 right-4'} w-12 h-12 rounded-full bg-white/95 flex items-center justify-center overflow-hidden shadow-lg ring-2 ring-white/30`}
-          >
+          <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/95 flex items-center justify-center overflow-hidden shadow-lg ring-2 ring-white/30">
             {user.profile_image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.profile_image} alt={user.name || ''} className="w-full h-full object-cover" />
@@ -95,7 +155,10 @@ export default function PrintCardPreview({ user }: PrintCardPreviewProps) {
 
           {/* Зүүн доод буланд нэр болон холбоо барих мэдээлэл */}
           <div className="absolute bottom-4 left-4 right-4">
-            <div className="h-[2px] w-8 bg-gradient-to-r from-sky-400 to-indigo-400 rounded-full mb-2" />
+            <div
+              className="h-[2px] w-8 rounded-full mb-2"
+              style={{ backgroundColor: active.accent_color }}
+            />
             <h3 className="text-white font-bold leading-tight text-base truncate">
               {user.name || 'Нэргүй хэрэглэгч'}
             </h3>
