@@ -19,6 +19,7 @@ const emptyForm: UserUpdate = {
   phone: '',
   location: '',
   facebook: '',
+  instagram: '',
   wiber: '',
   website: '',
   profile_image: '',
@@ -51,6 +52,7 @@ export default function DashboardPage() {
           email: u.email || '',
           location: u.location || '',
           facebook: u.facebook || '',
+          instagram: u.instagram || '',
           wiber: u.wiber || '',
           website: u.website || '',
           profile_image: u.profile_image || '',
@@ -195,6 +197,15 @@ export default function DashboardPage() {
                     placeholder="https://facebook.com/..."
                     value={form.facebook || ''}
                     onChange={(e) => handleChange('facebook', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Instagram</label>
+                  <input
+                    className={inputClass}
+                    placeholder="https://instagram.com/..."
+                    value={form.instagram || ''}
+                    onChange={(e) => handleChange('instagram', e.target.value)}
                   />
                 </div>
                 <div>
