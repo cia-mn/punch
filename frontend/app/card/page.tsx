@@ -7,6 +7,7 @@ import { FaThLarge } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
 import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
+import PrintCardPreview from '../../components/PrintCardPreview'
 import { getCardData, updateCardDesign } from '../../lib/api'
 import type { CardData } from '../../lib/types'
 
@@ -109,7 +110,7 @@ export default function CardPage() {
             <FaThLarge className="text-primary" /> Миний Карт &amp; QR
           </h1>
 
-          <div className="max-w-[400px] mx-auto">
+          <div className="grid lg:grid-cols-[400px_1fr] gap-6 items-start max-w-4xl mx-auto">
             <div>
               {/* Template selector — сонгосон даруйд баруун талын preview шууд шинэчлэгдэнэ,
                   гэхдээ "Хадгалах" дарж байж бусдад (/c/[id]) харагдана */}
@@ -184,6 +185,10 @@ export default function CardPage() {
                 <span className={showQr ? 'text-gray-400 text-sm' : 'text-sm'}>Харуулах</span>
               </div>
               <p className="text-center text-xs text-gray-400 mt-1">QR кодыг нуух / харуулах</p>
+            </div>
+
+            <div>
+              <PrintCardPreview user={data?.user || null} />
             </div>
           </div>
         </div>
