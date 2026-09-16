@@ -12,38 +12,46 @@ from .schemas import UserCreate
 models.Base.metadata.create_all(bind=database.engine)
 
 
-def _ensure_card_design_column():
+def _ensure_columns(table_name: str, column_defs: list):
     """
-    `models.Base.metadata.create_all()` зөвхөн ДУТУУ table-уудыг үүсгэдэг —
-    аль хэдийн байгаа `users` table-д шинэ багана (card_design) автоматаар
-    нэмдэггvй. Иймд эхлэх бvр шалгаад, дутуу бол ALTER TABLE-ээр нэмнэ.
-    Энэ нь зөвхөн SQLite/Postgres-т аюулгvйгээр ажиллана (IF NOT EXISTS
-    дэмждэггvй хуучин SQLite хувилбар байвал try/except-ээр хамгаалав).
+    `models.Base.metadata.create_all()` зөвхөн ДУТУУ table-уудыг үvсгэдэг —
+    аль хэдийн байгаа table-д шинэ багана автоматаар нэмдэггvй. Иймд эхлэх
+    бvр шалгаад, дутуу баганыг ALTER TABLE-ээр нэмнэ.
+
+    column_defs: [(багана_нэр, SQL_төрөл_ба_default), ...]
     """
     inspector = inspect(database.engine)
-    if "users" not in inspector.get_table_names():
-        return  # create_all дөнгөж үvсгэсэн бол багана хэдийнээ орсон байна
+    if table_name not in inspector.get_table_names():
+        return  # create_all дөнгөж vvсгэсэн бол багана хэдийнээ орсон байна
 
-    columns = [col["name"] for col in inspector.get_columns("users")]
-    if "card_design" in columns:
-        return
+    existing = {col["name"] for col in inspector.get_columns(table_name)}
 
     with database.engine.connect() as conn:
-        try:
-            conn.execute(
-                text(
-                    "ALTER TABLE users ADD COLUMN card_design VARCHAR(20) DEFAULT 'neumorphic'"
-                )
-            )
-            conn.commit()
-            print("[migration] users.card_design багана нэмэгдлээ.")
-        except Exception as e:
-            # Багана аль хэдийн байгаа эсвэл өөр шалтгаанаар алдаа гарвал
-            # апп унтрахгvйгээр лог хэвлээд үргэлжлүүлнэ.
-            print(f"[migration] card_design багана нэмэхэд алдаа гарлаа (үл тоомсорлов): {e}")
+        for col_name, ddl in column_defs:
+            if col_name in existing:
+                continue
+            try:
+                conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {ddl}"))
+                conn.commit()
+                print(f"[migration] {table_name}.{col_name} багана нэмэгдлээ.")
+            except Exception as e:
+                # Багана аль хэдийн байгаа эсвэл өөр шалтгаанаар алдаа гарвал
+                # апп унтрахгvйгээр лог хэвлээд vргэлжлvvлнэ.
+                print(f"[migration] {table_name}.{col_name} нэмэхэд алдаа гарлаа (vл тоомсорлов): {e}")
 
 
-_ensure_card_design_column()
+_ensure_columns("users", [
+    ("card_design", "VARCHAR(20) DEFAULT 'neumorphic'"),
+    ("instagram", "VARCHAR(255)"),
+])
+_ensure_columns("qr_designs", [
+    ("dot_style", "VARCHAR(30)"),
+    ("eye_style", "VARCHAR(30)"),
+    ("corner_frame_color", "VARCHAR(7)"),
+    ("corner_dot_color", "VARCHAR(7)"),
+    ("add_white_frame", "INTEGER DEFAULT 0"),
+    ("frame_color", "VARCHAR(7)"),
+])
 
 app = FastAPI(title="Digital Business Card API", version="1.0.0")
 

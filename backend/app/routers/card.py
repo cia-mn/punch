@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from .. import schemas, crud
 from ..database import get_db
 from ..auth import get_current_user
 from ..models import User
+from ..utils import get_client_ip, parse_user_agent, get_location_from_ip
 
 router = APIRouter(prefix="/api/card", tags=["card"])
 
@@ -48,3 +49,59 @@ async def get_text_content(
 ):
     text_content = crud.generate_text_content(current_user)
     return {"content": text_content}
+
+
+@router.post("/{user_id}/track")
+async def track_card_event(
+    user_id: int,
+    payload: schemas.TrackEventRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Нийтэд нээлттэй (AUTH ШААРДАХГVЙ) endpoint — /c/[id] хуудаснаас QR
+    уншуулалт болон товч дарсан vйлдлийг бvртгэнэ. Frontend-ийн
+    `trackCardEvent()` энд дуудагдана.
+
+    Картын эзэн олдохгvй тохиолдолд ч зочны хуудсыг тасалдуулахгvйн тулд
+    алдаа биш "ignored" төлөв буцаана.
+    """
+    user = crud.get_user_by_id(db, user_id)
+    if not user:
+        return {"status": "ignored"}
+
+    ip = get_client_ip(request)
+    device, browser = parse_user_agent(payload.user_agent or "")
+    location = get_location_from_ip(ip)
+
+    if payload.type == "scan":
+        crud.create_scan_event(
+            db,
+            user_id=user_id,
+            ip_address=ip,
+            location=location,
+            device=device,
+            browser=browser,
+            referrer=payload.referrer,
+        )
+    elif payload.type == "click":
+        crud.create_click_event(
+            db,
+            user_id=user_id,
+            label=payload.label or "unknown",
+            href=payload.href,
+            ip_address=ip,
+            location=location,
+            device=device,
+        )
+
+    return {"status": "ok"}
+
+
+@router.get("/analytics", response_model=schemas.CardAnalyticsSummary)
+async def get_card_analytics(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Нэвтэрсэн хэрэглэгчийн ӨӨРИЙН картын статистикийг буцаана."""
+    return crud.get_analytics_summary(db, current_user.id)

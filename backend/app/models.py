@@ -16,6 +16,7 @@ class User(Base):
     email = Column(String(255))
     location = Column(String(255))
     facebook = Column(String(255))
+    instagram = Column(String(255))
     wiber = Column(String(100))
     website = Column(String(255))
     profile_image = Column(Text)
@@ -39,10 +40,48 @@ class QRDesign(Base):
     qr_bg_color = Column(String(7), default="#ffffff")
     qr_size = Column(Integer, default=150)
     qr_logo = Column(Text)
+    # Frontend-ийн /design хуудсанд ашиглагддаг боловч өмнө нь энд байгаагvй
+    # байсан баганууд — эдгээр дутуу байснаас "зөвхөн өнгө хадгалагдаад,
+    # QR-ийн хэлбэр/хvрээний тохиргоо хадгалагдахгvй" гэсэн алдаа гарч байв.
+    dot_style = Column(String(30))
+    eye_style = Column(String(30))
+    corner_frame_color = Column(String(7))
+    corner_dot_color = Column(String(7))
+    add_white_frame = Column(Integer, default=0)  # SQLite boolean -> 0/1
+    frame_color = Column(String(7))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     user = relationship("User", back_populates="qr_design")
+
+
+class CardScan(Base):
+    """QR код уншуулалт (хуудас нээгдэх) бvр бvртгэгдэнэ."""
+    __tablename__ = "card_scans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    ip_address = Column(String(64))
+    location = Column(String(255))
+    device = Column(String(100))
+    browser = Column(String(100))
+    referrer = Column(String(500))
+    source = Column(String(100))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class CardClick(Base):
+    """Картан дээрх товч/холбоос дарсан vйлдэл бvр бvртгэгдэнэ."""
+    __tablename__ = "card_clicks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    label = Column(String(100))
+    href = Column(String(500))
+    ip_address = Column(String(64))
+    location = Column(String(255))
+    device = Column(String(100))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Session(Base):
     __tablename__ = "sessions"

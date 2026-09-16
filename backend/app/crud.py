@@ -103,7 +103,115 @@ EMAIL   : {user.email or ''}
 LOCATION: {user.location or ''}
 WEBSITE : {user.website or ''}
 FACEBOOK: {user.facebook or ''}
+INSTAGRAM: {getattr(user, 'instagram', '') or ''}
 WIBER   : {user.wiber or ''}
 ========================================
     SCAN QR CODE TO SAVE
 ========================================"""
+
+
+# --- Статистик (QR уншуулалт / товч дарсан) ---
+
+def create_scan_event(
+    db: Session,
+    user_id: int,
+    ip_address: str = None,
+    location: str = None,
+    device: str = None,
+    browser: str = None,
+    referrer: str = None,
+    source: str = None,
+):
+    scan = models.CardScan(
+        user_id=user_id,
+        ip_address=ip_address,
+        location=location,
+        device=device,
+        browser=browser,
+        referrer=referrer,
+        source=source,
+    )
+    db.add(scan)
+    db.commit()
+    db.refresh(scan)
+    return scan
+
+
+def create_click_event(
+    db: Session,
+    user_id: int,
+    label: str,
+    href: str = None,
+    ip_address: str = None,
+    location: str = None,
+    device: str = None,
+):
+    click = models.CardClick(
+        user_id=user_id,
+        label=label,
+        href=href,
+        ip_address=ip_address,
+        location=location,
+        device=device,
+    )
+    db.add(click)
+    db.commit()
+    db.refresh(click)
+    return click
+
+
+def get_analytics_summary(db: Session, user_id: int):
+    from sqlalchemy import func as sql_func
+
+    total_scans = (
+        db.query(models.CardScan)
+        .filter(models.CardScan.user_id == user_id)
+        .count()
+    )
+    unique_visitors = (
+        db.query(models.CardScan.ip_address)
+        .filter(
+            models.CardScan.user_id == user_id,
+            models.CardScan.ip_address.isnot(None),
+        )
+        .distinct()
+        .count()
+    )
+    total_clicks = (
+        db.query(models.CardClick)
+        .filter(models.CardClick.user_id == user_id)
+        .count()
+    )
+
+    clicks_grouped = (
+        db.query(models.CardClick.label, sql_func.count(models.CardClick.id).label("count"))
+        .filter(models.CardClick.user_id == user_id)
+        .group_by(models.CardClick.label)
+        .order_by(sql_func.count(models.CardClick.id).desc())
+        .all()
+    )
+    clicks_by_label = [{"label": label, "count": count} for label, count in clicks_grouped]
+
+    recent_scans = (
+        db.query(models.CardScan)
+        .filter(models.CardScan.user_id == user_id)
+        .order_by(models.CardScan.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    recent_clicks = (
+        db.query(models.CardClick)
+        .filter(models.CardClick.user_id == user_id)
+        .order_by(models.CardClick.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    return {
+        "total_scans": total_scans,
+        "unique_visitors": unique_visitors,
+        "total_clicks": total_clicks,
+        "clicks_by_label": clicks_by_label,
+        "recent_scans": recent_scans,
+        "recent_clicks": recent_clicks,
+    }
