@@ -23,7 +23,7 @@ type EyeStyleKey =
   | 'dot_dot'
   | 'dot_square'
 
-export interface ExtendedQRDesign extends Omit<QRDesign, 'qr_logo'> {
+export interface ExtendedQRDesign extends QRDesign {
   dot_style?: DotStyleKey
   eye_style?: EyeStyleKey
   corner_frame_color?: string
@@ -90,6 +90,7 @@ const QRCode = forwardRef<QRCodeHandle, QRCodeProps>(function QRCode({ value, de
   const withFrame = !!design?.add_white_frame
   const frameColor = design?.frame_color || '#ffffff'
   const eyeTypes = mapEyeTypes(design?.eye_style)
+  const logo = design?.qr_logo || undefined
 
   useEffect(() => {
     let cancelled = false
@@ -107,11 +108,25 @@ const QRCode = forwardRef<QRCodeHandle, QRCodeProps>(function QRCode({ value, de
           height: size,
           data: value,
           margin: 4,
-          qrOptions: { errorCorrectionLevel: 'M' },
+          // Лого нэмэгдсэн үед QR код унших боломжийг хадгалахын тулд
+          // алдаа засах түвшинг өндөр (H) болгоно — эсрэг тохиолдолд
+          // логоны улмаас цэгvvд дарагдаж, уншигдахгvй болох эрсдэлтэй.
+          qrOptions: { errorCorrectionLevel: logo ? 'H' : 'M' },
           dotsOptions: { color: fgColor, type: mapDotType(design?.dot_style) as any },
           backgroundOptions: { color: bgColor },
           cornersSquareOptions: { color: cornerSquareColor, type: eyeTypes.square as any },
           cornersDotOptions: { color: cornerDotColor, type: eyeTypes.dot as any },
+          ...(logo
+            ? {
+                image: logo,
+                imageOptions: {
+                  crossOrigin: 'anonymous',
+                  margin: 6,
+                  imageSize: 0.35,
+                  hideBackgroundDots: true,
+                },
+              }
+            : {}),
         })
 
         qrRef.current = instance
@@ -141,6 +156,7 @@ const QRCode = forwardRef<QRCodeHandle, QRCodeProps>(function QRCode({ value, de
     cornerDotColor,
     design?.dot_style,
     design?.eye_style,
+    logo,
     id,
   ])
 

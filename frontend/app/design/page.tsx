@@ -38,7 +38,7 @@ type EyeStyleKey =
   | 'dot_dot'
   | 'dot_square'
 
-interface ExtendedQRDesign extends Omit<QRDesign, 'qr_logo'> {
+interface ExtendedQRDesign extends QRDesign {
   dot_style?: DotStyleKey
   eye_style?: EyeStyleKey
   corner_frame_color?: string
@@ -141,7 +141,8 @@ export default function DesignPage() {
         corner_dot_color: design.corner_dot_color,
         add_white_frame: design.add_white_frame,
         frame_color: design.frame_color,
-      } as Partial<QRDesign>)
+        qr_logo: design.qr_logo,
+      })
       setDesign((prev) => (prev ? { ...prev, ...updated } : updated))
       toast.success('Хадгаллаа')
     } catch {
@@ -149,6 +150,19 @@ export default function DesignPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleLogoFile = (file: File | null) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      handleChange('qr_logo', reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveLogo = () => {
+    handleChange('qr_logo', undefined)
   }
 
   const handleReset = () => {
@@ -202,6 +216,7 @@ export default function DesignPage() {
     corner_dot_color: design?.corner_dot_color,
     add_white_frame: design?.add_white_frame,
     frame_color: design?.frame_color,
+    qr_logo: design?.qr_logo,
   }
 
   return (
@@ -367,6 +382,45 @@ export default function DesignPage() {
                     onChange={(v) => handleChange('frame_color', v)}
                   />
                 </div>
+              </section>
+
+              {/* Лого QR-ийн голд */}
+              <section>
+                <h2 className="font-semibold text-dark text-sm mb-4">Лого (QR-ийн голд)</h2>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                    {design?.qr_logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={design.qr_logo} alt="Лого" className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="text-[10px] text-gray-400 text-center px-1">Лого алга</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1">
+                    <label className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-primary cursor-pointer hover:bg-gray-50 transition-colors">
+                      ⬆ Лого сонгох
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleLogoFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                    {design?.qr_logo && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="text-xs text-red-500 hover:underline"
+                      >
+                        Логог устгах
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-3">
+                  Лого нэмэхэд QR кодын алдаа засах түвшин автоматаар өндөрсдөг тул код хэвийн уншигдана.
+                  Гэхдээ хэт том эсвэл нарийн зурагтай лого зарим уншигч төхөөрөмжид асуудал үvсгэж болзошгvй.
+                </p>
               </section>
 
               <button

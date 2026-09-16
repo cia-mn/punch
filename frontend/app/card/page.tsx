@@ -8,7 +8,7 @@ import Sidebar from '../../components/Sidebar'
 import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
 import PrintCardPreview from '../../components/PrintCardPreview'
-import { getCardData, updateCardDesign } from '../../lib/api'
+import { getCardData, getQRDesign, updateCardDesign } from '../../lib/api'
 import type { CardData } from '../../lib/types'
 
 const DESIGN_STORAGE_KEY = 'card_design'
@@ -50,6 +50,22 @@ export default function CardPage() {
           setDesign(serverDesign)
           setSavedDesign(serverDesign)
         }
+
+        // `/api/user/me/card-data`-н дотор орсон qr_design нь хуучирсан байж
+        // болзошгvй тул (жишээ нь тухайн endpoint тусад нь кэшлэгддэг бол)
+        // QR тохиргоог `/api/card/qr-design`-с ДАВХАР, тусад нь татаж, шинэ
+        // утгаар давхарлана — ингэснээр /design хуудсан дээр хийсэн бүх
+        // өөрчлөлт (dot/eye хэлбэр, хvрээ, лого гэх мэт) энд найдвартай
+        // ирнэ, зөвхөн өнгө биш.
+        getQRDesign()
+          .then((freshQrDesign) => {
+            setData((prev) =>
+              prev ? { ...prev, qr_design: { ...prev.qr_design, ...freshQrDesign } } : prev
+            )
+          })
+          .catch(() => {
+            // Амжилтгvй бол card-data-с ирсэн анхны qr_design-ээр л хязгаарлагдана
+          })
       })
       .catch(() => {
         toast.error('Мэдээлэл авахад алдаа гарлаа')

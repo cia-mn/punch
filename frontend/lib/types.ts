@@ -21,6 +21,20 @@ export type EyeStyleKey =
 export interface QRDesign {
   dot_style?: DotStyleKey
   eye_style?: EyeStyleKey
+  // Доорх талбарууд нь QRCode.tsx болон /design хуудсанд бодитоор ашиглагддаг
+  // нэрүүд — өмнө нь энд `color`/`bg_color` гэж өөр нэрээр тодорхойлогдсон
+  // байснаас болж /design дээр хийсэн тохиргоо (QR-ийн хэлбэр, булангийн
+  // өнгө, хүрээ) "Миний Карт" дээр бүрэн дамждаггvй асуудал үvсэж байсан.
+  qr_color?: string
+  qr_bg_color?: string
+  qr_size?: number
+  corner_frame_color?: string
+  corner_dot_color?: string
+  add_white_frame?: boolean
+  frame_color?: string
+  // QR кодын голд харагдах лого (base64 өгөгдөл эсвэл URL)
+  qr_logo?: string
+  // Хуучин код бусад газар ашигладаг байж болзошгvй тул хадгалав
   color?: string
   bg_color?: string
   logo_url?: string
