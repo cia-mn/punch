@@ -101,6 +101,7 @@ export default function DesignPage() {
   const [saving, setSaving] = useState(false)
   const [printCard, setPrintCard] = useState<PrintCardDesign>(PRINT_CARD_DEFAULTS)
   const [printCardSaved, setPrintCardSaved] = useState(true)
+  const [colorsOpen, setColorsOpen] = useState(false)
   const router = useRouter()
   const qrRef = useRef<QRCodeHandle>(null)
 
@@ -276,53 +277,91 @@ export default function DesignPage() {
                 </div>
               </section>
 
-              {/* Colors */}
-              <section>
-                <h2 className="font-semibold text-dark text-sm mb-4">Өнгөний тохиргоо</h2>
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <ColorField
-                    label="QR цэгүүд"
-                    value={design?.qr_color || DEFAULTS.qr_color!}
-                    onChange={(v) => handleChange('qr_color', v)}
-                  />
-                  <ColorField
-                    label="Булангийн хүрээ"
-                    value={design?.corner_frame_color || DEFAULTS.corner_frame_color!}
-                    onChange={(v) => handleChange('corner_frame_color', v)}
-                  />
-                  <ColorField
-                    label="Булангийн цэг"
-                    value={design?.corner_dot_color || DEFAULTS.corner_dot_color!}
-                    onChange={(v) => handleChange('corner_dot_color', v)}
-                  />
-                </div>
-                <ColorField
-                  label="Дэвсгэр өнгө"
-                  value={design?.qr_bg_color || DEFAULTS.qr_bg_color!}
-                  onChange={(v) => handleChange('qr_bg_color', v)}
-                />
+              {/* Colors — том нуттонд нуугдмал (accordion) */}
+              <section className="border border-gray-200 rounded-2xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setColorsOpen((v) => !v)}
+                  className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-semibold text-dark text-sm">Өнгөний тохиргоо</h2>
+                    {/* Хаалттай vед сонгосон 4 өнгийг жижиг дугариг байдлаар харуулна */}
+                    {!colorsOpen && (
+                      <div className="flex items-center -space-x-1.5">
+                        {[
+                          design?.qr_color || DEFAULTS.qr_color,
+                          design?.corner_frame_color || DEFAULTS.corner_frame_color,
+                          design?.corner_dot_color || DEFAULTS.corner_dot_color,
+                          design?.qr_bg_color || DEFAULTS.qr_bg_color,
+                        ].map((c, i) => (
+                          <span
+                            key={i}
+                            className="w-5 h-5 rounded-full border-2 border-white ring-1 ring-gray-200"
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <svg
+                    className={`w-4 h-4 text-gray-400 transition-transform ${colorsOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                  </svg>
+                </button>
 
-                <p className="text-xs font-medium text-gray-500 mt-5 mb-2 tracking-wide uppercase">
-                  Бэлэн загварууд
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => {
-                        handleChange('qr_color', c)
-                        handleChange('corner_frame_color', c)
-                        handleChange('corner_dot_color', c)
-                      }}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        design?.qr_color === c ? 'border-primary' : 'border-transparent'
-                      }`}
-                      style={{ backgroundColor: c }}
-                      aria-label={c}
+                {colorsOpen && (
+                  <div className="px-4 pb-5 pt-1 border-t border-gray-100">
+                    <div className="grid grid-cols-3 gap-3 mb-4 mt-4">
+                      <ColorField
+                        label="QR цэгvvд"
+                        value={design?.qr_color || DEFAULTS.qr_color!}
+                        onChange={(v) => handleChange('qr_color', v)}
+                      />
+                      <ColorField
+                        label="Булангийн хvрээ"
+                        value={design?.corner_frame_color || DEFAULTS.corner_frame_color!}
+                        onChange={(v) => handleChange('corner_frame_color', v)}
+                      />
+                      <ColorField
+                        label="Булангийн цэг"
+                        value={design?.corner_dot_color || DEFAULTS.corner_dot_color!}
+                        onChange={(v) => handleChange('corner_dot_color', v)}
+                      />
+                    </div>
+                    <ColorField
+                      label="Дэвсгэр өнгө"
+                      value={design?.qr_bg_color || DEFAULTS.qr_bg_color!}
+                      onChange={(v) => handleChange('qr_bg_color', v)}
                     />
-                  ))}
-                </div>
+
+                    <p className="text-xs font-medium text-gray-500 mt-5 mb-2 tracking-wide uppercase">
+                      Бэлэн загварууд
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            handleChange('qr_color', c)
+                            handleChange('corner_frame_color', c)
+                            handleChange('corner_dot_color', c)
+                          }}
+                          className={`w-8 h-8 rounded-full border-2 ${
+                            design?.qr_color === c ? 'border-primary' : 'border-transparent'
+                          }`}
+                          style={{ backgroundColor: c }}
+                          aria-label={c}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </section>
 
               {/* QR size */}
