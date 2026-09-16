@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { User } from '../lib/types'
+import QRCode, { type ExtendedQRDesign } from './QRCode'
 
 export type PrintCardOrientation = 'horizontal' | 'vertical'
 
@@ -49,6 +50,10 @@ interface PrintCardPreviewProps {
   // Хэрэв true бол дотоод localStorage-с УНШИХГVЙ — гадны `design` prop-ыг
   // шууд ашиглана (энэ нь /design хуудсан дээрх LIVE preview-д хэрэгтэй).
   controlled?: boolean
+  // Заавал биш: өгвөл картны баруун доод буланд жижиг QR код харуулна
+  // (жишээ нь хэрэглэгчийн нийтэд харагдах /c/[id] холбоос).
+  qrValue?: string
+  qrDesign?: ExtendedQRDesign
 }
 
 function initials(name?: string) {
@@ -63,6 +68,8 @@ export default function PrintCardPreview({
   design,
   onOrientationChange,
   controlled = false,
+  qrValue,
+  qrDesign,
 }: PrintCardPreviewProps) {
   const [localDesign, setLocalDesign] = useState<PrintCardDesign>(PRINT_CARD_DEFAULTS)
 
@@ -154,7 +161,7 @@ export default function PrintCardPreview({
           </div>
 
           {/* Зүүн доод буланд нэр болон холбоо барих мэдээлэл */}
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className={`absolute bottom-4 left-4 ${qrValue ? 'right-[76px]' : 'right-4'}`}>
             <div
               className="h-[2px] w-8 rounded-full mb-2"
               style={{ backgroundColor: active.accent_color }}
@@ -171,6 +178,13 @@ export default function PrintCardPreview({
               {user.website && <p className="text-white/60 text-[10px] truncate">{user.website}</p>}
             </div>
           </div>
+
+          {/* Баруун доод буланд жижиг QR код */}
+          {qrValue && (
+            <div className="absolute bottom-4 right-4 w-14 h-14 rounded-lg overflow-hidden bg-white flex items-center justify-center shadow-lg">
+              <QRCode value={qrValue} design={{ ...qrDesign, qr_size: 56 }} compact />
+            </div>
+          )}
         </div>
       </div>
 

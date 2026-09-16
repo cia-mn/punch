@@ -36,6 +36,9 @@ interface QRCodeProps {
   value: string
   design?: ExtendedQRDesign | null
   id?: string
+  // true бол падаж/сvvдэрийг хассан, жижиг зайд (жишээ нь хэвлэмэл картын
+  // буланд) шигтгэхэд тохиромжтой хувилбарыг зурна.
+  compact?: boolean
 }
 
 export interface QRCodeHandle {
@@ -78,7 +81,7 @@ function mapEyeTypes(style?: EyeStyleKey) {
   return map[style || 'square_square'] || map.square_square
 }
 
-const QRCode = forwardRef<QRCodeHandle, QRCodeProps>(function QRCode({ value, design, id }, ref) {
+const QRCode = forwardRef<QRCodeHandle, QRCodeProps>(function QRCode({ value, design, id, compact = false }, ref) {
   const containerRef = useRef<HTMLDivElement>(null)
   const qrRef = useRef<any>(null)
 
@@ -168,10 +171,10 @@ const QRCode = forwardRef<QRCodeHandle, QRCodeProps>(function QRCode({ value, de
 
   return (
     <div
-      className="inline-flex items-center justify-center rounded-2xl p-4"
+      className={compact ? 'inline-flex items-center justify-center' : 'inline-flex items-center justify-center rounded-2xl p-4'}
       style={{
         backgroundColor: withFrame ? frameColor : bgColor,
-        boxShadow: withFrame ? '0 0 0 1px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)' : 'none',
+        boxShadow: !compact && withFrame ? '0 0 0 1px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)' : 'none',
       }}
     >
       <div ref={containerRef} />

@@ -214,7 +214,11 @@ export default function CardPage() {
             </div>
 
             <div>
-              <PrintCardPreview user={data?.user || null} />
+              <PrintCardPreview
+                user={data?.user || null}
+                qrValue={shareUrl || data?.user.phone}
+                qrDesign={data?.qr_design}
+              />
               <button
                 type="button"
                 onClick={handleCopyShareLink}
