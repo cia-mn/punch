@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6C63FF] to-[#FF6584] p-4">
       <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-[#1a1a2e]">Digital Card</h1>
+          <h1 className="text-3xl font-bold text-[#1a1a2e]">Punch.mn</h1>
           <p className="text-gray-500">Утасны дугаараар нэвтрэх</p>
         </div>
 
