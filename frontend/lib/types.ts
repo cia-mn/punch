@@ -66,9 +66,44 @@ export interface User {
   [key: string]: any // Бусад нэмэлт талбаруудад алдаа заахаас сэргийлнэ
 }
 
-// api.ts дотор ашиглагддаг ч энд алга байсан төрлүүд — эдгээр байхгvй
-// байснаас болж TypeScript compile хийхгvй, төслийг ажиллуулах боломжгvй
-// болгодог байсан. (импортлогдсон боловч экспортлогдоогvй байсан.)
+// /analytics хуудсанд ашиглагдана — backend "хэн хааноос орж ирсэн, ямар товч
+// дарсан" гэдгийг бvртгэж, нэгтгэсэн тайланг эндхийн бvтцээр буцаах ёстой.
+export interface CardScanEvent {
+  id: string
+  created_at: string
+  // Backend IP хаягаас тодорхойлсон улс/хот (боломжтой бол)
+  location?: string
+  // User-Agent-аас задалсан төхөөрөмж/browser мэдээлэл (жишээ нь "iPhone · Safari")
+  device?: string
+  browser?: string
+  // Хаанаас (ямар холбоос/суваг) орж ирснийг заана — жишээ нь Instagram,
+  // Facebook, шууд холбоос, эсвэл QR камер уншуулалт
+  referrer?: string
+  source?: string
+}
+
+export interface CardClickEvent {
+  id: string
+  created_at: string
+  // Ямар товч/холбоос дээр дарснийг заана — жишээ нь "Facebook", "Утас",
+  // "Add Contact", "Вебсайт" гэх мэт
+  label: string
+  href?: string
+  location?: string
+  device?: string
+}
+
+export interface CardAnalyticsSummary {
+  total_scans: number
+  unique_visitors: number
+  total_clicks: number
+  // Товч тус бvрээр хэдэн удаа дарагдсаныг нэгтгэсэн тоо
+  clicks_by_label: { label: string; count: number }[]
+  recent_scans: CardScanEvent[]
+  recent_clicks: CardClickEvent[]
+}
+
+export type TrackEventType = 'scan' | 'click'
 
 export interface LoginResponse {
   token: string

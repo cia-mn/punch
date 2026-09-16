@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import CardPreview from '../../../components/CardPreview'
-import { getPublicCard } from '../../../lib/api'
+import { getPublicCard, trackCardEvent } from '../../../lib/api'
 import { CARD_DESIGNS, type CardDesign, type User } from '../../../lib/types'
 
 const NEU_BG = 'bg-[#e2e8f0]'
@@ -19,6 +19,7 @@ export default function PublicCardPage() {
   const [design, setDesign] = useState<CardDesign>('neumorphic')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const scanTracked = useRef(false)
 
   useEffect(() => {
     if (!id) {
@@ -38,6 +39,14 @@ export default function PublicCardPage() {
         if (savedDesign && CARD_DESIGNS.some((d) => d.id === savedDesign)) {
           setDesign(savedDesign)
         }
+
+        // Карт амжилттай ачаалагдмагц (өөрөөр хэлбэл хэн нэгэн QR/линкээр
+        // орж ирж, картыг бодитоор харсан) нэг л удаа "уншуулалт" event
+        // илгээнэ — React StrictMode дахин дуудахаас scanTracked-ээр хамгаална.
+        if (!scanTracked.current) {
+          scanTracked.current = true
+          trackCardEvent(id, 'scan')
+        }
       })
       .catch(() => setError('Карт олдсонгүй'))
       .finally(() => setLoading(false))
@@ -45,6 +54,7 @@ export default function PublicCardPage() {
 
   const handleAddContact = () => {
     if (!vcf) return
+    trackCardEvent(id, 'click', { label: 'Add Contact' })
     const blob = new Blob([vcf], { type: 'text/vcard' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -59,11 +69,34 @@ export default function PublicCardPage() {
 
   const handleCopyVcfText = async () => {
     if (!vcf) return
+    trackCardEvent(id, 'click', { label: 'VCF Contact' })
     try {
       await navigator.clipboard.writeText(vcf)
       toast.success('Текст хуулагдлаа — Notepad-д буулгаж болно')
     } catch {
       toast.error('Хуулахад алдаа гарлаа')
+    }
+  }
+
+  // Картан дээрх бусад бvх холбоос/товч (Facebook, утас, и-мэйл, вебсайт,
+  // байршил гэх мэт) нь загвар бvрийн дотоод <a>/<button> элемент тул тэдгээр
+  // vvсгэдэг компонент бvрт тусад нь handler дамжуулахын оронд, ЭНД нэг л
+  // capture-level click listener-ээр бvгдийг нь барьж, tracking event
+  // илгээнэ. Ингэснээр ямар нэгэн загвар компонент өөрчлөгдөхгvй.
+  const handleCardAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    const link = target.closest('a')
+    const button = target.closest('button')
+    if (link) {
+      const label = link.getAttribute('aria-label') || link.textContent?.trim() || 'link'
+      trackCardEvent(id, 'click', { label, href: link.getAttribute('href') || undefined })
+    } else if (button && !button.disabled) {
+      const label = button.getAttribute('aria-label') || button.textContent?.trim() || 'button'
+      // Add Contact / VCF Contact товчнуудыг дээр аль хэдийн тусад нь
+      // бичсэн тул энд давхардуулахгvй.
+      if (label !== 'Add Contact' && label !== 'VCF Contact') {
+        trackCardEvent(id, 'click', { label })
+      }
     }
   }
 
@@ -89,13 +122,15 @@ export default function PublicCardPage() {
           байгаа тул энд давхардуулж дахин зурахгvй — харин зочны хуудсанд зөв
           (getPublicCard-аас ирсэн) vcf өгөгдлийг ашиглахын тулд handler-уудыг
           шууд дамжуулна. */}
-      <CardPreview
-        user={user}
-        showQr={false}
-        design={design}
-        onAddContact={handleAddContact}
-        onVcfContact={handleCopyVcfText}
-      />
+      <div onClickCapture={handleCardAreaClick}>
+        <CardPreview
+          user={user}
+          showQr={false}
+          design={design}
+          onAddContact={handleAddContact}
+          onVcfContact={handleCopyVcfText}
+        />
+      </div>
       <p className="text-center text-[10px] text-slate-400 mt-1">
         &quot;VCF Contact&quot; товч нь мэдээллийг текст хэлбэрээр хуулж, Notepad зэрэгт буулгах боломжтой
       </p>

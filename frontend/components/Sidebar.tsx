@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { FaIdCard, FaThLarge, FaQrcode, FaPaintBrush, FaSignOutAlt, FaUser } from 'react-icons/fa'
+import { FaIdCard, FaThLarge, FaQrcode, FaPaintBrush, FaChartBar, FaSignOutAlt, FaUser } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ export default function Sidebar({ user }: SidebarProps) {
     { path: '/dashboard', icon: FaThLarge, label: 'Dashboard' },
     { path: '/card', icon: FaQrcode, label: 'Миний Карт' },
     { path: '/design', icon: FaPaintBrush, label: 'QR Design' },
+    { path: '/analytics', icon: FaChartBar, label: 'Статистик' },
   ]
 
   const handleLogout = () => {
@@ -30,7 +31,7 @@ export default function Sidebar({ user }: SidebarProps) {
     <div className="bg-dark min-h-screen p-6 text-white sticky top-0">
       <div className="flex items-center gap-3 mb-8">
         <FaIdCard className="text-secondary text-2xl" />
-        <span className="text-xl font-bold">Punch.mn</span>
+        <span className="text-xl font-bold">Digital Card</span>
       </div>
 
       <nav className="space-y-1">

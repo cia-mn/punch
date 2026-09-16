@@ -1,10 +1,12 @@
 import axios from 'axios'
 import type {
+  CardAnalyticsSummary,
   CardData,
   CardDesign,
   LoginResponse,
   QRDesign,
   QRDesignUpdate,
+  TrackEventType,
   User,
   UserUpdate,
 } from './types'
@@ -97,5 +99,40 @@ export async function getVcf(): Promise<{ content: string; filename: string }> {
 
 export async function getTextContent(): Promise<{ content: string }> {
   const res = await api.get('/api/card/text')
+  return res.data
+}
+
+// --- Статистик (QR уншуулалт / товч дарсан тоо) ---
+//
+// Backend талд дараах endpoint-vvдийг нэмэх шаардлагатай:
+//   POST /api/card/:id/track   { type: 'scan' | 'click', label?, href?, referrer?, user_agent? }
+//     - Нэвтрээгvй (нийтэд харагдах /c/[id]) хуудаснаас дуудагдана тул AUTH
+//       ШААРДАХГVЙ. Backend талд IP хаягаас улс/хот, User-Agent-аас
+//       төхөөрөмж/browser-ийг тодорхойлж хадгална.
+//   GET  /api/card/analytics   -> CardAnalyticsSummary
+//     - Нэвтэрсэн (эзэмшигч) хэрэглэгчийн өөрийн картын статистикийг буцаана.
+//
+// Доорх функцууд backend бэлэн болтол UI-г эвдэхгvй байхын тулд алдааг
+// дараад нам гvм өнгөрнө (throw хийхгvй) — учир нь tracking нь public
+// хуудасны хэвийн ажиллагааг ХЭЗЭЭ Ч тасалдуулах ёсгvй.
+export async function trackCardEvent(
+  cardId: string | number,
+  type: TrackEventType,
+  meta?: { label?: string; href?: string; referrer?: string }
+): Promise<void> {
+  try {
+    await api.post(`/api/card/${cardId}/track`, {
+      type,
+      referrer: typeof document !== 'undefined' ? document.referrer || undefined : undefined,
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+      ...meta,
+    })
+  } catch {
+    // Tracking амжилтгvй болсон ч зочны туршлагад нөлөөлөхгvй — нам гvм өнгөрнө
+  }
+}
+
+export async function getCardAnalytics(): Promise<CardAnalyticsSummary> {
+  const res = await api.get<CardAnalyticsSummary>('/api/card/analytics')
   return res.data
 }
