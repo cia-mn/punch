@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaThLarge } from 'react-icons/fa'
+import { FaThLarge, FaCopy } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
 import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
@@ -83,6 +83,16 @@ export default function CardPage() {
   // дарах шаардлагатай (доор handleSaveDesign).
   const handleSelectDesign = (id: CardDesign) => {
     setDesign(id)
+  }
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      toast.success('Холбоос хуулагдлаа')
+    } catch {
+      toast.error('Хуулахад алдаа гарлаа')
+    }
   }
 
   const handleSaveDesign = async () => {
@@ -205,6 +215,16 @@ export default function CardPage() {
 
             <div>
               <PrintCardPreview user={data?.user || null} />
+              <button
+                type="button"
+                onClick={handleCopyShareLink}
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-full font-medium text-sm hover:bg-gray-50 shadow-sm transition-colors"
+              >
+                <FaCopy className="text-primary" /> QR холбоосыг хуулах
+              </button>
+              <p className="text-center text-xs text-gray-400 mt-2">
+                Хэвлэмэл картан дээр хэвлэх зориулалттай холбоосыг (/c/{data?.user.id}) хуулж авах
+              </p>
             </div>
           </div>
         </div>
