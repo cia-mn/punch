@@ -14,7 +14,12 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     
-    if (!phone || phone.length < 8) {
+    const trimmed = phone.trim()
+    // "4567" бол тусгай admin код тул энгийн утасны дугаарын урт (8+)
+    // шаардлагаас чөлөөлнө.
+    const isAdminCode = trimmed === '4567'
+
+    if (!trimmed || (!isAdminCode && trimmed.length < 8)) {
       setError('Утасны дугаараа зөв оруулна уу!')
       return
     }
