@@ -108,10 +108,23 @@ export type TrackEventType = 'scan' | 'click'
 
 // --- Карт захиалга ---
 
-export type CardOrderType = 'qr' | 'physical'
+export type CardOrderType = 'qr' | 'card'
+export type QRSubtype = 'phone' | 'physical'
+export type CardOrientation = 'vertical' | 'horizontal'
+
+// Backend талд ТООЦООЛОГДОНО — frontend зөвхөн харуулахад ашиглана
+export const ORDER_PRICES: Record<string, number> = {
+  'qr:phone': 50000,
+  'qr:physical': 70000,
+  'card:vertical': 80000,
+  'card:horizontal': 80000,
+}
 
 export interface OrderCreate {
   order_type: CardOrderType
+  qr_subtype?: QRSubtype
+  card_orientation?: CardOrientation
+  contact_phone?: string
   quantity?: number
   address?: string
   note?: string
@@ -120,6 +133,10 @@ export interface OrderCreate {
 export interface OrderResponse {
   id: number
   order_type: CardOrderType
+  qr_subtype?: QRSubtype
+  card_orientation?: CardOrientation
+  price: number
+  contact_phone?: string
   quantity: number
   address?: string
   note?: string

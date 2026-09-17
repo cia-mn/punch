@@ -1,16 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaShieldAlt, FaSyncAlt, FaQrcode, FaIdCard, FaCopy, FaBoxOpen } from 'react-icons/fa'
+import { FaShieldAlt, FaSyncAlt, FaQrcode, FaIdCard, FaCopy, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
 import CardPreview from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
 import { getCurrentUser, getAllOrders, updateOrderStatus } from '../../lib/api'
 import type { AdminOrderResponse, User } from '../../lib/types'
 
-const STATUS_OPTIONS = ['pending', 'paid', 'confirmed', 'shipped', 'done'] as const
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'Хvлээгдэж буй', icon: FaClock },
+  { value: 'done', label: 'Хийсэн', icon: FaCheckCircle },
+  { value: 'cancelled', label: 'Хийгээгvй', icon: FaTimesCircle },
+] as const
 
 function formatDate(iso: string) {
   try {
@@ -28,24 +32,20 @@ function formatDate(iso: string) {
 
 function statusColor(status: string) {
   switch (status) {
-    case 'paid':
-    case 'confirmed':
-      return 'bg-blue-50 text-blue-600'
-    case 'shipped':
-      return 'bg-amber-50 text-amber-600'
     case 'done':
       return 'bg-emerald-50 text-emerald-600'
+    case 'cancelled':
+      return 'bg-red-50 text-red-500'
     default:
-      return 'bg-gray-100 text-gray-600'
+      return 'bg-amber-50 text-amber-600'
   }
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Хvлээгдэж буй',
-  paid: 'Төлбөр орсон',
-  confirmed: 'Баталгаажсан',
-  shipped: 'Илгээгдсэн',
-  done: 'Дууссан',
+function orderTypeLabel(order: AdminOrderResponse) {
+  if (order.order_type === 'qr') {
+    return order.qr_subtype === 'physical' ? 'QR · Биетээр' : 'QR · Утсан дээр'
+  }
+  return order.card_orientation === 'vertical' ? 'Карт · Босоо' : 'Карт · Хэвтээ'
 }
 
 export default function AdminPage() {
@@ -140,19 +140,6 @@ export default function AdminPage() {
 
   const list = orders || []
 
-  const summary = useMemo(() => {
-    const byStatus: Record<string, number> = {}
-    for (const s of STATUS_OPTIONS) byStatus[s] = 0
-    let qrCount = 0
-    let physicalCount = 0
-    for (const o of list) {
-      byStatus[o.status] = (byStatus[o.status] || 0) + 1
-      if (o.order_type === 'physical') physicalCount += 1
-      else qrCount += 1
-    }
-    return { total: list.length, byStatus, qrCount, physicalCount }
-  }, [list])
-
   return (
     <div className="min-h-screen bg-gray-100 flex">
       <div className="w-64 hidden md:block">
@@ -174,29 +161,6 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {/* Хураангуй — нийт захиалга болон статусаар нь тоолсон vзvvлэлт */}
-          {list.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-              <div className="bg-white rounded-2xl p-4 shadow-sm">
-                <p className="text-2xl font-bold text-dark flex items-center gap-2">
-                  <FaBoxOpen className="text-primary text-lg" /> {summary.total}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">Нийт захиалга</p>
-                <p className="text-[11px] text-gray-300 mt-0.5">
-                  QR {summary.qrCount} · Биет {summary.physicalCount}
-                </p>
-              </div>
-              {STATUS_OPTIONS.map((s) => (
-                <div key={s} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <p className="text-2xl font-bold text-dark">{summary.byStatus[s] || 0}</p>
-                  <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full mt-1 ${statusColor(s)}`}>
-                    {STATUS_LABELS[s] || s}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
           {list.length === 0 ? (
             <div className="bg-white rounded-2xl p-10 shadow-sm text-center text-gray-400 text-sm">
               Одоогоор ирсэн захиалга алга
@@ -211,30 +175,44 @@ export default function AdminPage() {
                         {order.user.name || 'Нэргvй'} · {order.user.phone}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {order.order_type === 'physical' ? 'Биет карт' : 'QR-аар'} · {order.quantity} ширхэг
-                        {order.address ? ` · ${order.address}` : ''}
+                        {orderTypeLabel(order)} · {order.price.toLocaleString()}₮
+                        {order.contact_phone ? ` · Холбогдох утас: ${order.contact_phone}` : ''}
                       </p>
+                      {order.address && (
+                        <p className="text-xs text-gray-400 mt-0.5">Хаяг: {order.address}</p>
+                      )}
                       {order.note && (
                         <p className="text-xs text-gray-400 italic mt-0.5">{order.note}</p>
                       )}
                       <p className="text-[11px] text-gray-300 mt-1">{formatDate(order.created_at)}</p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-end gap-2">
                       <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${statusColor(order.status)}`}>
-                        {STATUS_LABELS[order.status] || order.status}
+                        {STATUS_OPTIONS.find((s) => s.value === order.status)?.label || order.status}
                       </span>
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_LABELS[s] || s}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-1.5">
+                        {STATUS_OPTIONS.map((s) => {
+                          const Icon = s.icon
+                          const active = order.status === s.value
+                          return (
+                            <button
+                              key={s.value}
+                              type="button"
+                              onClick={() => handleStatusChange(order.id, s.value)}
+                              title={s.label}
+                              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors ${
+                                active
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                              }`}
+                            >
+                              <Icon className="text-xs" />
+                              {s.label}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
 

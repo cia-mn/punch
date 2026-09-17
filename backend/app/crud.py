@@ -219,10 +219,33 @@ def get_analytics_summary(db: Session, user_id: int):
 
 # --- Карт захиалга ---
 
+# Захиалгын vнийг backend талд ТООЦООЛНО — клиентээс ирсэн vнэд ХЭЗЭЭ Ч
+# найдахгvй (хэрэглэгч devtools-оор өөрчлөх эрсдэлтэй).
+ORDER_PRICES = {
+    ("qr", "phone"): 50_000,
+    ("qr", "physical"): 70_000,
+    ("card", "vertical"): 80_000,
+    ("card", "horizontal"): 80_000,
+}
+
+
+def calculate_order_price(order_type: str, qr_subtype: str = None, card_orientation: str = None) -> int:
+    key = (order_type, qr_subtype if order_type == "qr" else card_orientation)
+    price = ORDER_PRICES.get(key)
+    if price is None:
+        raise ValueError("Захиалгын төрөл/дэд төрөл буруу байна")
+    return price
+
+
 def create_order(db: Session, user_id: int, order: schemas.OrderCreate):
+    price = calculate_order_price(order.order_type, order.qr_subtype, order.card_orientation)
     db_order = models.CardOrder(
         user_id=user_id,
         order_type=order.order_type,
+        qr_subtype=order.qr_subtype,
+        card_orientation=order.card_orientation,
+        price=price,
+        contact_phone=order.contact_phone,
         quantity=order.quantity,
         address=order.address,
         note=order.note,
@@ -252,6 +275,10 @@ def get_all_orders(db: Session):
         result.append({
             "id": order.id,
             "order_type": order.order_type,
+            "qr_subtype": order.qr_subtype,
+            "card_orientation": order.card_orientation,
+            "price": order.price,
+            "contact_phone": order.contact_phone,
             "quantity": order.quantity,
             "address": order.address,
             "note": order.note,

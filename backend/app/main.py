@@ -53,6 +53,12 @@ _ensure_columns("qr_designs", [
     ("add_white_frame", "INTEGER DEFAULT 0"),
     ("frame_color", "VARCHAR(7)"),
 ])
+_ensure_columns("card_orders", [
+    ("qr_subtype", "VARCHAR(20)"),
+    ("card_orientation", "VARCHAR(20)"),
+    ("price", "INTEGER DEFAULT 0"),
+    ("contact_phone", "VARCHAR(20)"),
+])
 
 app = FastAPI(title="Digital Business Card API", version="1.0.0")
 

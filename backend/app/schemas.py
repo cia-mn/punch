@@ -155,8 +155,13 @@ class CardAnalyticsSummary(BaseModel):
 # --- Карт захиалга ---
 
 class OrderCreate(BaseModel):
-    # "qr" (зөвхөн QR наалт) эсвэл "physical" (биет хэвлэмэл карт)
+    # "qr" (QR код) эсвэл "card" (хэвлэмэл карт)
     order_type: str
+    # order_type == "qr" vед заавал: "phone" (утсан дээр) эсвэл "physical" (биетээр)
+    qr_subtype: Optional[str] = None
+    # order_type == "card" vед заавал: "vertical" эсвэл "horizontal"
+    card_orientation: Optional[str] = None
+    contact_phone: Optional[str] = None
     quantity: int = 1
     address: Optional[str] = None
     note: Optional[str] = None
@@ -165,6 +170,10 @@ class OrderCreate(BaseModel):
 class OrderResponse(BaseModel):
     id: int
     order_type: str
+    qr_subtype: Optional[str] = None
+    card_orientation: Optional[str] = None
+    price: int
+    contact_phone: Optional[str] = None
     quantity: int
     address: Optional[str] = None
     note: Optional[str] = None
@@ -178,6 +187,10 @@ class OrderResponse(BaseModel):
 class AdminOrderResponse(BaseModel):
     id: int
     order_type: str
+    qr_subtype: Optional[str] = None
+    card_orientation: Optional[str] = None
+    price: int
+    contact_phone: Optional[str] = None
     quantity: int
     address: Optional[str] = None
     note: Optional[str] = None

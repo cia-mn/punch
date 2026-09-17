@@ -91,15 +91,23 @@ class CardClick(Base):
 class CardOrder(Base):
     """
     Хэрэглэгч /card хуудсанд орж карт захиалахад vvсдэг мөр.
-    order_type: "qr" (зөвхөн QR наалт) эсвэл "physical" (биет хэвлэмэл карт).
-    status: "pending" -> "confirmed" -> "shipped" -> "done" (admin гар аргаар
-    өөрчилнө, энэ MVP-д зөвхөн харах боломжтой байхад анхаарав).
+
+    order_type: "qr" (QR код) эсвэл "card" (хэвлэмэл карт)
+      - order_type == "qr" vед qr_subtype: "phone" (утсан дээр, 50,000₮)
+        эсвэл "physical" (биетээр, 70,000₮)
+      - order_type == "card" vед card_orientation: "vertical" эсвэл
+        "horizontal" — хоёулаа адилхан 80,000₮
+    status: "pending" -> "done" эсвэл "cancelled" (admin гар аргаар тэмдэглэнэ)
     """
     __tablename__ = "card_orders"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    order_type = Column(String(20), nullable=False)  # "qr" | "physical"
+    order_type = Column(String(20), nullable=False)  # "qr" | "card"
+    qr_subtype = Column(String(20))  # "phone" | "physical" (зөвхөн order_type=="qr")
+    card_orientation = Column(String(20))  # "vertical" | "horizontal" (зөвхөн order_type=="card")
+    price = Column(Integer, default=0)  # Backend тооцоолсон vнэ (төгрөгөөр)
+    contact_phone = Column(String(20))
     quantity = Column(Integer, default=1)
     address = Column(String(500))
     note = Column(Text)

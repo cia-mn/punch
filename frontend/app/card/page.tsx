@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaThLarge, FaCopy, FaBoxOpen, FaQrcode, FaIdCard, FaTimes } from 'react-icons/fa'
+import { FaThLarge, FaCopy, FaBoxOpen, FaQrcode, FaIdCard, FaTimes, FaMobileAlt, FaCheckCircle } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
 import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
 import PrintCardPreview from '../../components/PrintCardPreview'
 import { getCardData, getQRDesign, updateCardDesign, createCardOrder } from '../../lib/api'
-import type { CardData, CardOrderType } from '../../lib/types'
+import type { CardData, CardOrderType, QRSubtype, CardOrientation } from '../../lib/types'
+import { ORDER_PRICES } from '../../lib/types'
 
 const DESIGN_STORAGE_KEY = 'card_design'
 
@@ -21,11 +22,14 @@ export default function CardPage() {
   const [savedDesign, setSavedDesign] = useState<CardDesign | null>(null)
   const [saving, setSaving] = useState(false)
   const [orderModalOpen, setOrderModalOpen] = useState(false)
-  const [orderType, setOrderType] = useState<CardOrderType>('qr')
-  const [orderQuantity, setOrderQuantity] = useState(1)
+  const [orderType, setOrderType] = useState<CardOrderType | null>(null)
+  const [qrSubtype, setQrSubtype] = useState<QRSubtype | null>(null)
+  const [cardOrientation, setCardOrientation] = useState<CardOrientation | null>(null)
   const [orderAddress, setOrderAddress] = useState('')
+  const [orderPhone, setOrderPhone] = useState('')
   const [orderNote, setOrderNote] = useState('')
   const [orderSubmitting, setOrderSubmitting] = useState(false)
+  const [orderPaid, setOrderPaid] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -102,28 +106,58 @@ export default function CardPage() {
   }
 
   const openOrderModal = () => {
-    setOrderType('qr')
-    setOrderQuantity(1)
+    setOrderType(null)
+    setQrSubtype(null)
+    setCardOrientation(null)
     setOrderAddress('')
+    setOrderPhone(data?.user.phone || '')
     setOrderNote('')
+    setOrderPaid(false)
     setOrderModalOpen(true)
   }
 
+  // Хvргэлт (хаяг) шаардсан эсэх: биет QR наалт болон хэвлэмэл карт
+  // (аль ч чиглэлээр нь) хvргэлттэй, харин "утсан дээр" QR бол цэвэр
+  // дижитал тул хаяг шаардахгvй.
+  const needsDelivery = orderType === 'card' || (orderType === 'qr' && qrSubtype === 'physical')
+
+  const orderPriceKey =
+    orderType === 'qr' && qrSubtype
+      ? `qr:${qrSubtype}`
+      : orderType === 'card' && cardOrientation
+      ? `card:${cardOrientation}`
+      : null
+  const orderPrice = orderPriceKey ? ORDER_PRICES[orderPriceKey] : null
+
+  const canSubmitOrder =
+    !!orderPrice &&
+    orderPhone.trim().length > 0 &&
+    (!needsDelivery || orderAddress.trim().length > 0)
+
   const handleSubmitOrder = async () => {
-    if (orderType === 'physical' && !orderAddress.trim()) {
+    if (!orderType || !orderPrice) return
+    if (needsDelivery && !orderAddress.trim()) {
       toast.error('Хvргэлтийн хаягаа оруулна уу')
+      return
+    }
+    if (!orderPhone.trim()) {
+      toast.error('Холбогдох утасны дугаараа оруулна уу')
       return
     }
     setOrderSubmitting(true)
     try {
       await createCardOrder({
         order_type: orderType,
-        quantity: orderQuantity,
-        address: orderType === 'physical' ? orderAddress.trim() : undefined,
+        qr_subtype: orderType === 'qr' ? qrSubtype || undefined : undefined,
+        card_orientation: orderType === 'card' ? cardOrientation || undefined : undefined,
+        contact_phone: orderPhone.trim(),
+        address: needsDelivery ? orderAddress.trim() : undefined,
         note: orderNote.trim() || undefined,
       })
-      toast.success('Захиалга амжилттай илгээгдлээ')
-      setOrderModalOpen(false)
+      // Бодит төлбөрийн систем холбогдоогvй тул энд симуляц хийнэ:
+      // захиалга сервэрт "pending" төлөвтэй vvссэний дараа "төлбөр
+      // амжилттай" гэсэн харагдацыг харуулна.
+      setOrderPaid(true)
     } catch {
       toast.error('Захиалга vvсгэхэд алдаа гарлаа')
     } finally {
@@ -285,10 +319,31 @@ export default function CardPage() {
           onClick={() => !orderSubmitting && setOrderModalOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl"
+            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-5">
+            {/* Төлбөр амжилттай болсны дараах давхарга — доорх маягтыг
+                blur хийж, амжилтын мессежийг дээр нь харуулна. */}
+            {orderPaid && (
+              <div className="absolute inset-0 z-10 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
+                <FaCheckCircle className="text-5xl text-emerald-500 mb-4" />
+                <h3 className="text-lg font-bold text-dark mb-2">Төлбөр амжилттай хийгдлээ</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  {needsDelivery
+                    ? 'Таны захиалга 5-10 хоногийн дотор бvртгvvлсэн хаяг дээр хvргэлтээр очих болно.'
+                    : 'Таны QR идэвхжсэн бөгөөд утсан дээрээ шууд ашиглах боломжтой боллоо.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setOrderModalOpen(false)}
+                  className="w-full bg-primary text-white px-5 py-3 rounded-full font-semibold text-sm hover:bg-primary/90"
+                >
+                  Хаах
+                </button>
+              </div>
+            )}
+
+            <div className={`flex items-center justify-between mb-5 ${orderPaid ? 'invisible' : ''}`}>
               <h2 className="text-lg font-bold text-dark flex items-center gap-2">
                 <FaBoxOpen className="text-primary" /> Карт захиалах
               </h2>
@@ -302,84 +357,175 @@ export default function CardPage() {
               </button>
             </div>
 
-            <p className="text-sm font-medium text-gray-700 mb-3">Захиалгын төрөл сонгох</p>
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <button
-                type="button"
-                onClick={() => setOrderType('qr')}
-                aria-pressed={orderType === 'qr'}
-                className={`flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 transition-all ${
-                  orderType === 'qr'
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                }`}
-              >
-                <FaQrcode className="text-2xl" />
-                <span className="text-sm font-semibold">QR-аар</span>
-                <span className="text-[11px] text-gray-400 text-center">Зөвхөн QR наалт</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setOrderType('physical')}
-                aria-pressed={orderType === 'physical'}
-                className={`flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 transition-all ${
-                  orderType === 'physical'
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                }`}
-              >
-                <FaIdCard className="text-2xl" />
-                <span className="text-sm font-semibold">Биет карт</span>
-                <span className="text-[11px] text-gray-400 text-center">Хэвлэмэл, хvргэлттэй</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Тоо ширхэг</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={orderQuantity}
-                  onChange={(e) => setOrderQuantity(Math.max(1, Number(e.target.value)))}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                />
+            <div className={orderPaid ? 'invisible' : ''}>
+              {/* 1-р шат: QR эсвэл Карт сонгох */}
+              <p className="text-sm font-medium text-gray-700 mb-3">Захиалгын төрөл сонгох</p>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderType('qr')
+                    setCardOrientation(null)
+                  }}
+                  aria-pressed={orderType === 'qr'}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 transition-all ${
+                    orderType === 'qr'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
+                >
+                  <FaQrcode className="text-2xl" />
+                  <span className="text-sm font-semibold">QR-аар</span>
+                  <span className="text-[11px] text-gray-400 text-center">Утсан дээр эсвэл биетээр</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderType('card')
+                    setQrSubtype(null)
+                  }}
+                  aria-pressed={orderType === 'card'}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-4 transition-all ${
+                    orderType === 'card'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                  }`}
+                >
+                  <FaIdCard className="text-2xl" />
+                  <span className="text-sm font-semibold">Биет карт</span>
+                  <span className="text-[11px] text-gray-400 text-center">Хэвлэмэл, хvргэлттэй</span>
+                </button>
               </div>
 
-              {orderType === 'physical' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Хvргэлтийн хаяг</label>
-                  <input
-                    type="text"
-                    value={orderAddress}
-                    onChange={(e) => setOrderAddress(e.target.value)}
-                    placeholder="Дvvрэг, хороо, байр, орц гэх мэт"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
-                  />
+              {/* 2-р шат: QR-ийн дэд сонголт */}
+              {orderType === 'qr' && (
+                <div className="mb-5">
+                  <p className="text-sm font-medium text-gray-700 mb-3">QR-ийг хэрхэн авах вэ?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setQrSubtype('phone')}
+                      aria-pressed={qrSubtype === 'phone'}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition-all ${
+                        qrSubtype === 'phone'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <FaMobileAlt className="text-xl" />
+                      <span className="text-xs font-semibold">Утсан дээр</span>
+                      <span className="text-[11px] text-gray-400">50,000₮</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQrSubtype('physical')}
+                      aria-pressed={qrSubtype === 'physical'}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition-all ${
+                        qrSubtype === 'physical'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <FaQrcode className="text-xl" />
+                      <span className="text-xs font-semibold">Биетээр</span>
+                      <span className="text-[11px] text-gray-400">70,000₮</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Нэмэлт тайлбар <span className="text-gray-400 font-normal">(заавал биш)</span>
-                </label>
-                <textarea
-                  value={orderNote}
-                  onChange={(e) => setOrderNote(e.target.value)}
-                  rows={2}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-none"
-                />
-              </div>
-            </div>
+              {/* 2-р шат: Картын чиглэл */}
+              {orderType === 'card' && (
+                <div className="mb-5">
+                  <p className="text-sm font-medium text-gray-700 mb-3">Картын чиглэл</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCardOrientation('vertical')}
+                      aria-pressed={cardOrientation === 'vertical'}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition-all ${
+                        cardOrientation === 'vertical'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold">▯ Босоо</span>
+                      <span className="text-[11px] text-gray-400">80,000₮</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCardOrientation('horizontal')}
+                      aria-pressed={cardOrientation === 'horizontal'}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-3 py-3.5 transition-all ${
+                        cardOrientation === 'horizontal'
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold">▭ Хэвтээ</span>
+                      <span className="text-[11px] text-gray-400">80,000₮</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
-            <button
-              type="button"
-              onClick={handleSubmitOrder}
-              disabled={orderSubmitting}
-              className="mt-6 w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-full font-semibold text-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
-            >
-              {orderSubmitting ? 'Илгээж байна…' : 'Захиалга илгээх'}
-            </button>
+              {/* 3-р шат: хаяг, утас, тайлбар */}
+              {orderPrice && (
+                <div className="space-y-4 border-t border-gray-100 pt-4">
+                  {needsDelivery && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Хvргэлтийн хаягийн дэлгэрэнгvй
+                      </label>
+                      <input
+                        type="text"
+                        value={orderAddress}
+                        onChange={(e) => setOrderAddress(e.target.value)}
+                        placeholder="Дvvрэг, хороо, байр, орц гэх мэт"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Утасны дугаар</label>
+                    <input
+                      type="text"
+                      value={orderPhone}
+                      onChange={(e) => setOrderPhone(e.target.value)}
+                      placeholder="9911xxxx"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Дэлгэрэнгvй мэдээлэл <span className="text-gray-400 font-normal">(заавал биш)</span>
+                    </label>
+                    <textarea
+                      value={orderNote}
+                      onChange={(e) => setOrderNote(e.target.value)}
+                      rows={2}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary resize-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                    <span className="text-sm font-medium text-gray-600">Нийт vнэ</span>
+                    <span className="text-lg font-bold text-dark">{orderPrice.toLocaleString()}₮</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSubmitOrder}
+                disabled={!canSubmitOrder || orderSubmitting}
+                className="mt-5 w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-full font-semibold text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {orderSubmitting ? 'Төлбөр тооцож байна…' : orderPrice ? `${orderPrice.toLocaleString()}₮ төлөх` : 'Төлбөр төлөх'}
+              </button>
+            </div>
           </div>
         </div>
       )}

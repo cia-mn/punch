@@ -114,14 +114,33 @@ async def create_card_order(
     db: Session = Depends(get_db),
 ):
     """
-    Хэрэглэгч /card хуудсанаас "QR-аар" эсвэл "Биет карт" сонгож захиалга
-    vvсгэхэд дуудагдана. Нэвтэрсэн байх шаардлагатай.
+    Хэрэглэгч /card хуудсанаас захиалга vvсгэхэд дуудагдана. Нэвтэрсэн байх
+    шаардлагатай. Талбаруудыг эндvvс баталгаажуулж, vнийг backend талд
+    ТООЦООЛНО (клиентээс ирсэн vнэнд найдахгvй).
     """
-    if order.order_type not in ("qr", "physical"):
-        raise HTTPException(status_code=400, detail="order_type нь 'qr' эсвэл 'physical' байх ёстой")
-    if order.order_type == "physical" and not (order.address or "").strip():
-        raise HTTPException(status_code=400, detail="Биет карт захиалахад хvргэлтийн хаяг шаардлагатай")
-    return crud.create_order(db, current_user.id, order)
+    if order.order_type not in ("qr", "card"):
+        raise HTTPException(status_code=400, detail="order_type нь 'qr' эсвэл 'card' байх ёстой")
+
+    if order.order_type == "qr" and order.qr_subtype not in ("phone", "physical"):
+        raise HTTPException(status_code=400, detail="qr_subtype нь 'phone' эсвэл 'physical' байх ёстой")
+
+    if order.order_type == "card" and order.card_orientation not in ("vertical", "horizontal"):
+        raise HTTPException(
+            status_code=400, detail="card_orientation нь 'vertical' эсвэл 'horizontal' байх ёстой"
+        )
+
+    # Хvргэлт шаардсан төрлvvдэд (биет QR наалт, хэвлэмэл карт) хаяг заавал
+    needs_delivery = order.order_type == "card" or (order.order_type == "qr" and order.qr_subtype == "physical")
+    if needs_delivery and not (order.address or "").strip():
+        raise HTTPException(status_code=400, detail="Энэ захиалгад хvргэлтийн хаяг шаардлагатай")
+
+    if not (order.contact_phone or "").strip():
+        raise HTTPException(status_code=400, detail="Холбогдох утасны дугаар шаардлагатай")
+
+    try:
+        return crud.create_order(db, current_user.id, order)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/orders", response_model=list[schemas.AdminOrderResponse])

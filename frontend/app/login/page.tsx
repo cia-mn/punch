@@ -25,7 +25,15 @@ export default function LoginPage() {
       if (response.token) {
         localStorage.setItem('token', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
-        router.push('/dashboard')
+        // "4567" гэсэн тусгай код оруулбал шууд admin хэсэг рvv шилжvvлнэ.
+        // Анхаар: энэ бол зөвхөн чиглvvлэлт (routing) — жинхэнэ эрх
+        // (is_admin) backend талд тухайн хэрэглэгчид аль хэдийн олгогдсон
+        // байх ёстой, эс бөгөөс /admin хуудас 403 өгнө.
+        if (phone.trim() === '4567') {
+          router.push('/admin')
+        } else {
+          router.push('/dashboard')
+        }
       }
     } catch (error: any) {
       setError(error.response?.data?.detail || 'Нэвтрэхэд алдаа гарлаа')
