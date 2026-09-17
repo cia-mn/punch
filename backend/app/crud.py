@@ -215,3 +215,43 @@ def get_analytics_summary(db: Session, user_id: int):
         "recent_scans": recent_scans,
         "recent_clicks": recent_clicks,
     }
+
+
+# --- Карт захиалга ---
+
+def create_order(db: Session, user_id: int, order: schemas.OrderCreate):
+    db_order = models.CardOrder(
+        user_id=user_id,
+        order_type=order.order_type,
+        quantity=order.quantity,
+        address=order.address,
+        note=order.note,
+    )
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+    return db_order
+
+
+def get_all_orders(db: Session):
+    """Admin-д зориулсан — бvх хэрэглэгчийн захиалгыг хамгийн сvvлээс нь жагсаана."""
+    rows = (
+        db.query(models.CardOrder, models.User)
+        .join(models.User, models.CardOrder.user_id == models.User.id)
+        .order_by(models.CardOrder.created_at.desc())
+        .all()
+    )
+    result = []
+    for order, user in rows:
+        result.append({
+            "id": order.id,
+            "order_type": order.order_type,
+            "quantity": order.quantity,
+            "address": order.address,
+            "note": order.note,
+            "status": order.status,
+            "created_at": order.created_at,
+            "user_name": user.name,
+            "user_phone": user.phone,
+        })
+    return result

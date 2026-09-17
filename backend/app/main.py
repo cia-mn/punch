@@ -43,6 +43,7 @@ def _ensure_columns(table_name: str, column_defs: list):
 _ensure_columns("users", [
     ("card_design", "VARCHAR(20) DEFAULT 'neumorphic'"),
     ("instagram", "VARCHAR(255)"),
+    ("is_admin", "INTEGER DEFAULT 0"),
 ])
 _ensure_columns("qr_designs", [
     ("dot_style", "VARCHAR(30)"),

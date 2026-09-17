@@ -4,6 +4,9 @@ import type {
   CardData,
   CardDesign,
   LoginResponse,
+  OrderCreate,
+  OrderResponse,
+  AdminOrderResponse,
   QRDesign,
   QRDesignUpdate,
   TrackEventType,
@@ -134,5 +137,18 @@ export async function trackCardEvent(
 
 export async function getCardAnalytics(): Promise<CardAnalyticsSummary> {
   const res = await api.get<CardAnalyticsSummary>('/api/card/analytics')
+  return res.data
+}
+
+// --- Карт захиалга ---
+
+export async function createCardOrder(payload: OrderCreate): Promise<OrderResponse> {
+  const res = await api.post<OrderResponse>('/api/card/order', payload)
+  return res.data
+}
+
+// Зөвхөн admin эрхтэй хэрэглэгчид зориулав — эрхгvй бол backend 403 буцаана.
+export async function getAllOrders(): Promise<AdminOrderResponse[]> {
+  const res = await api.get<AdminOrderResponse[]>('/api/card/orders')
   return res.data
 }

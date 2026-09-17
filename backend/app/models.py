@@ -25,6 +25,10 @@ class User(Base):
     # /card хуудсанд сонгож "Хадгалах" дарахад энд хадгалагдана, /c/[id] дээр
     # зочдод харагдана.
     card_design = Column(String(20), default="neumorphic", server_default="neumorphic")
+    # Зөвхөн admin эрхтэй хэрэглэгч захиалгын жагсаалтыг (/analytics) харна.
+    # DB-д гар аргаар шинэчлэх эсвэл нэг удаагийн /api/user/me/claim-admin
+    # route-оор (ADMIN_SECRET-тэй) идэвхжvvлнэ.
+    is_admin = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -82,6 +86,27 @@ class CardClick(Base):
     location = Column(String(255))
     device = Column(String(100))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class CardOrder(Base):
+    """
+    Хэрэглэгч /card хуудсанд орж карт захиалахад vvсдэг мөр.
+    order_type: "qr" (зөвхөн QR наалт) эсвэл "physical" (биет хэвлэмэл карт).
+    status: "pending" -> "confirmed" -> "shipped" -> "done" (admin гар аргаар
+    өөрчилнө, энэ MVP-д зөвхөн харах боломжтой байхад анхаарав).
+    """
+    __tablename__ = "card_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    order_type = Column(String(20), nullable=False)  # "qr" | "physical"
+    quantity = Column(Integer, default=1)
+    address = Column(String(500))
+    note = Column(Text)
+    status = Column(String(20), default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User")
 
 class Session(Base):
     __tablename__ = "sessions"

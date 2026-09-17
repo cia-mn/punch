@@ -29,3 +29,17 @@ async def get_current_user(
         )
     
     return user
+
+
+async def get_current_admin(current_user=Depends(get_current_user)):
+    """
+    `is_admin` биш хэрэглэгчид Статистикийн захиалгын жагсаалт (admin-only)
+    руу хандахыг хориглоно. Route дотор `Depends(get_current_admin)`-ээр
+    ашиглана.
+    """
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin эрх шаардлагатай",
+        )
+    return current_user

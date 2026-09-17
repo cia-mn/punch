@@ -42,6 +42,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    is_admin: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
     
@@ -149,3 +150,36 @@ class CardAnalyticsSummary(BaseModel):
     clicks_by_label: List[ClickLabelCount]
     recent_scans: List[CardScanEventResponse]
     recent_clicks: List[CardClickEventResponse]
+
+
+# --- Карт захиалга ---
+
+class OrderCreate(BaseModel):
+    # "qr" (зөвхөн QR наалт) эсвэл "physical" (биет хэвлэмэл карт)
+    order_type: str
+    quantity: int = 1
+    address: Optional[str] = None
+    note: Optional[str] = None
+
+
+class OrderResponse(BaseModel):
+    id: int
+    order_type: str
+    quantity: int
+    address: Optional[str] = None
+    note: Optional[str] = None
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AdminOrderResponse(OrderResponse):
+    # Admin-ийн жагсаалтад захиалагчийн мэдээллийг мөн харуулна
+    user_name: Optional[str] = None
+    user_phone: Optional[str] = None
+
+
+class AdminClaimRequest(BaseModel):
+    secret: str

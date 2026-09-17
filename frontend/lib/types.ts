@@ -63,6 +63,7 @@ export interface User {
   social_links?: Record<string, string>
   qr_design?: QRDesign
   card_design?: CardDesign
+  is_admin?: boolean
   [key: string]: any // Бусад нэмэлт талбаруудад алдаа заахаас сэргийлнэ
 }
 
@@ -104,6 +105,32 @@ export interface CardAnalyticsSummary {
 }
 
 export type TrackEventType = 'scan' | 'click'
+
+// --- Карт захиалга ---
+
+export type CardOrderType = 'qr' | 'physical'
+
+export interface OrderCreate {
+  order_type: CardOrderType
+  quantity?: number
+  address?: string
+  note?: string
+}
+
+export interface OrderResponse {
+  id: number
+  order_type: CardOrderType
+  quantity: number
+  address?: string
+  note?: string
+  status: string
+  created_at: string
+}
+
+export interface AdminOrderResponse extends OrderResponse {
+  user_name?: string
+  user_phone?: string
+}
 
 export interface LoginResponse {
   token: string

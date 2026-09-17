@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from .. import schemas, crud
@@ -50,3 +51,25 @@ async def get_public_card(user_id: int, db: Session = Depends(get_db)):
         "user": user,
         "vcf_content": vcf,
     }
+
+
+@router.post("/me/claim-admin", response_model=schemas.UserResponse)
+async def claim_admin(
+    payload: schemas.AdminClaimRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Нэг удаагийн admin эрх авах route. Render дээрх орчны хувьсагч
+    ADMIN_SECRET-тэй ижил утга илгээвэл одоогийн нэвтэрсэн хэрэглэгчийг
+    admin болгоно. Ашигласны дараа ADMIN_SECRET-ийг устгах/солихыг зөвлөж
+    байна (аюулгvй байдлын vvднээс).
+    """
+    expected = os.getenv("ADMIN_SECRET")
+    if not expected or payload.secret != expected:
+        raise HTTPException(status_code=403, detail="Буруу secret")
+
+    current_user.is_admin = 1
+    db.commit()
+    db.refresh(current_user)
+    return current_user

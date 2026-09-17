@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from .. import schemas, crud
 from ..database import get_db
-from ..auth import get_current_user
+from ..auth import get_current_user, get_current_admin
 from ..models import User
 from ..utils import get_client_ip, parse_user_agent, get_location_from_ip
 
@@ -105,3 +105,33 @@ async def get_card_analytics(
 ):
     """Нэвтэрсэн хэрэглэгчийн ӨӨРИЙН картын статистикийг буцаана."""
     return crud.get_analytics_summary(db, current_user.id)
+
+
+@router.post("/order", response_model=schemas.OrderResponse)
+async def create_card_order(
+    order: schemas.OrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Хэрэглэгч /card хуудсанаас "QR-аар" эсвэл "Биет карт" сонгож захиалга
+    vvсгэхэд дуудагдана. Нэвтэрсэн байх шаардлагатай.
+    """
+    if order.order_type not in ("qr", "physical"):
+        raise HTTPException(status_code=400, detail="order_type нь 'qr' эсвэл 'physical' байх ёстой")
+    if order.order_type == "physical" and not (order.address or "").strip():
+        raise HTTPException(status_code=400, detail="Биет карт захиалахад хvргэлтийн хаяг шаардлагатай")
+    return crud.create_order(db, current_user.id, order)
+
+
+@router.get("/orders", response_model=list[schemas.AdminOrderResponse])
+async def list_all_orders(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Зөвхөн admin эрхтэй хэрэглэгчид зориулав — бvх хэрэглэгчийн захиалгыг
+    буцаана. Frontend талд /analytics хуудасны доод хэсэгт л (admin
+    эсэхээс хамаараад) харагдана.
+    """
+    return crud.get_all_orders(db)

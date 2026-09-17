@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaChartBar, FaQrcode, FaMousePointer, FaUsers, FaSyncAlt } from 'react-icons/fa'
+import { FaChartBar, FaQrcode, FaMousePointer, FaUsers, FaSyncAlt, FaBoxOpen, FaIdCard } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
-import { getCurrentUser, getCardAnalytics } from '../../lib/api'
-import type { CardAnalyticsSummary, User } from '../../lib/types'
+import { getCurrentUser, getCardAnalytics, getAllOrders } from '../../lib/api'
+import type { CardAnalyticsSummary, AdminOrderResponse, User } from '../../lib/types'
 
 const EMPTY_SUMMARY: CardAnalyticsSummary = {
   total_scans: 0,
@@ -40,6 +40,7 @@ export default function AnalyticsPage() {
   // ирэхийг тусад нь таньж, "тохиргоо дутуу" гэдгийг зочинд бус эзэмшигчид
   // ойлгомжтой байдлаар харуулна.
   const [backendMissing, setBackendMissing] = useState(false)
+  const [orders, setOrders] = useState<AdminOrderResponse[] | null>(null)
   const router = useRouter()
 
   const load = async () => {
@@ -48,6 +49,19 @@ export default function AnalyticsPage() {
       setUser(u)
       setSummary(s)
       setBackendMissing(false)
+
+      // Захиалгын жагсаалт зөвхөн admin эрхтэй хэрэглэгчид зориулагдсан тул
+      // энгийн хэрэглэгчид энэ хэсэг рэндэрлэгдэхгvй, дуудлага ч хийгдэхгvй.
+      if (u.is_admin) {
+        try {
+          const o = await getAllOrders()
+          setOrders(o)
+        } catch {
+          setOrders(null)
+        }
+      } else {
+        setOrders(null)
+      }
     } catch {
       setBackendMissing(true)
       setSummary(EMPTY_SUMMARY)
@@ -217,6 +231,52 @@ export default function AnalyticsPage() {
               </div>
             )}
           </div>
+
+          {/* Захиалгууд — ЗӨВХӨН admin эрхтэй хэрэглэгчид харагдана.
+              `orders` нь admin биш хэрэглэгчид vргэлж `null` тул энэ хэсэг
+              бvхэлдээ рэндэрлэгдэхгvй. */}
+          {user?.is_admin && orders && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm mt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FaBoxOpen className="text-primary" />
+                <h2 className="font-semibold text-dark">Захиалгууд</h2>
+                <span className="text-[11px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                  Зөвхөн admin
+                </span>
+              </div>
+              {orders.length === 0 ? (
+                <EmptyState text="Одоогоор ирсэн захиалга алга" />
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {orders.map((o) => (
+                    <div key={o.id} className="py-3 flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                          {o.order_type === 'physical' ? <FaIdCard /> : <FaQrcode />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {o.user_name || 'Нэргvй'} · {o.user_phone || '—'}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">
+                            {o.order_type === 'physical' ? 'Биет карт' : 'QR-аар'} · {o.quantity} ширхэг
+                            {o.address ? ` · ${o.address}` : ''}
+                          </p>
+                          {o.note && <p className="text-xs text-gray-400 truncate italic">{o.note}</p>}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="block text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 mb-1">
+                          {o.status}
+                        </span>
+                        <span className="text-xs text-gray-400">{formatDate(o.created_at)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
