@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { FaShieldAlt, FaSyncAlt, FaQrcode, FaIdCard, FaCopy } from 'react-icons/fa'
+import { FaShieldAlt, FaSyncAlt, FaQrcode, FaIdCard, FaCopy, FaBoxOpen } from 'react-icons/fa'
 import Sidebar from '../../components/Sidebar'
 import CardPreview from '../../components/CardPreview'
 import QRCode from '../../components/QRCode'
@@ -38,6 +38,14 @@ function statusColor(status: string) {
     default:
       return 'bg-gray-100 text-gray-600'
   }
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Хvлээгдэж буй',
+  paid: 'Төлбөр орсон',
+  confirmed: 'Баталгаажсан',
+  shipped: 'Илгээгдсэн',
+  done: 'Дууссан',
 }
 
 export default function AdminPage() {
@@ -132,6 +140,19 @@ export default function AdminPage() {
 
   const list = orders || []
 
+  const summary = useMemo(() => {
+    const byStatus: Record<string, number> = {}
+    for (const s of STATUS_OPTIONS) byStatus[s] = 0
+    let qrCount = 0
+    let physicalCount = 0
+    for (const o of list) {
+      byStatus[o.status] = (byStatus[o.status] || 0) + 1
+      if (o.order_type === 'physical') physicalCount += 1
+      else qrCount += 1
+    }
+    return { total: list.length, byStatus, qrCount, physicalCount }
+  }, [list])
+
   return (
     <div className="min-h-screen bg-gray-100 flex">
       <div className="w-64 hidden md:block">
@@ -152,6 +173,29 @@ export default function AdminPage() {
               <FaSyncAlt className={refreshing ? 'animate-spin' : ''} /> Шинэчлэх
             </button>
           </div>
+
+          {/* Хураангуй — нийт захиалга болон статусаар нь тоолсон vзvvлэлт */}
+          {list.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+              <div className="bg-white rounded-2xl p-4 shadow-sm">
+                <p className="text-2xl font-bold text-dark flex items-center gap-2">
+                  <FaBoxOpen className="text-primary text-lg" /> {summary.total}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">Нийт захиалга</p>
+                <p className="text-[11px] text-gray-300 mt-0.5">
+                  QR {summary.qrCount} · Биет {summary.physicalCount}
+                </p>
+              </div>
+              {STATUS_OPTIONS.map((s) => (
+                <div key={s} className="bg-white rounded-2xl p-4 shadow-sm">
+                  <p className="text-2xl font-bold text-dark">{summary.byStatus[s] || 0}</p>
+                  <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full mt-1 ${statusColor(s)}`}>
+                    {STATUS_LABELS[s] || s}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {list.length === 0 ? (
             <div className="bg-white rounded-2xl p-10 shadow-sm text-center text-gray-400 text-sm">
@@ -178,7 +222,7 @@ export default function AdminPage() {
 
                     <div className="flex items-center gap-2">
                       <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${statusColor(order.status)}`}>
-                        {order.status}
+                        {STATUS_LABELS[order.status] || order.status}
                       </span>
                       <select
                         value={order.status}
@@ -187,7 +231,7 @@ export default function AdminPage() {
                       >
                         {STATUS_OPTIONS.map((s) => (
                           <option key={s} value={s}>
-                            {s}
+                            {STATUS_LABELS[s] || s}
                           </option>
                         ))}
                       </select>
