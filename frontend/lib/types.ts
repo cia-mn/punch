@@ -128,8 +128,8 @@ export interface OrderResponse {
 }
 
 export interface AdminOrderResponse extends OrderResponse {
-  user_name?: string
-  user_phone?: string
+  user: User
+  qr_design?: QRDesign
 }
 
 export interface LoginResponse {

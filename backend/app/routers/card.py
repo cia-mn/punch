@@ -131,7 +131,21 @@ async def list_all_orders(
 ):
     """
     Зөвхөн admin эрхтэй хэрэглэгчид зориулав — бvх хэрэглэгчийн захиалгыг
-    буцаана. Frontend талд /analytics хуудасны доод хэсэгт л (admin
-    эсэхээс хамаараад) харагдана.
+    буцаана. Frontend талд /admin хуудсанд л (admin эсэхээс хамаараад)
+    харагдана.
     """
     return crud.get_all_orders(db)
+
+
+@router.patch("/order/{order_id}/status", response_model=schemas.OrderResponse)
+async def update_order_status(
+    order_id: int,
+    payload: schemas.OrderStatusUpdate,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin захиалгын статусыг (жишээ нь 'paid', 'shipped') шинэчилнэ."""
+    order = crud.update_order_status(db, order_id, payload.status)
+    if not order:
+        raise HTTPException(status_code=404, detail="Захиалга олдсонгvй")
+    return order

@@ -234,7 +234,12 @@ def create_order(db: Session, user_id: int, order: schemas.OrderCreate):
 
 
 def get_all_orders(db: Session):
-    """Admin-д зориулсан — бvх хэрэглэгчийн захиалгыг хамгийн сvvлээс нь жагсаана."""
+    """
+    Admin-д зориулсан — бvх хэрэглэгчийн захиалгыг хамгийн сvvлээс нь
+    жагсаана. Захиалагч бvрийн БОДИТ User объект болон QRDesign-ийг хамт
+    буцаана — ингэснээр frontend талд захиалагчийн картыг (CardPreview) болон
+    QR-ийг шууд зурж харуулж чадна.
+    """
     rows = (
         db.query(models.CardOrder, models.User)
         .join(models.User, models.CardOrder.user_id == models.User.id)
@@ -243,6 +248,7 @@ def get_all_orders(db: Session):
     )
     result = []
     for order, user in rows:
+        qr_design = get_qr_design_by_user(db, user.id)
         result.append({
             "id": order.id,
             "order_type": order.order_type,
@@ -251,7 +257,17 @@ def get_all_orders(db: Session):
             "note": order.note,
             "status": order.status,
             "created_at": order.created_at,
-            "user_name": user.name,
-            "user_phone": user.phone,
+            "user": user,
+            "qr_design": qr_design,
         })
     return result
+
+
+def update_order_status(db: Session, order_id: int, status: str):
+    order = db.query(models.CardOrder).filter(models.CardOrder.id == order_id).first()
+    if not order:
+        return None
+    order.status = status
+    db.commit()
+    db.refresh(order)
+    return order

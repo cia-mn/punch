@@ -152,3 +152,8 @@ export async function getAllOrders(): Promise<AdminOrderResponse[]> {
   const res = await api.get<AdminOrderResponse[]>('/api/card/orders')
   return res.data
 }
+
+export async function updateOrderStatus(orderId: number, status: string): Promise<OrderResponse> {
+  const res = await api.patch<OrderResponse>(`/api/card/order/${orderId}/status`, { status })
+  return res.data
+}

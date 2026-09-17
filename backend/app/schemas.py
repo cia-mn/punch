@@ -175,11 +175,27 @@ class OrderResponse(BaseModel):
         from_attributes = True
 
 
-class AdminOrderResponse(OrderResponse):
-    # Admin-ийн жагсаалтад захиалагчийн мэдээллийг мөн харуулна
-    user_name: Optional[str] = None
-    user_phone: Optional[str] = None
+class AdminOrderResponse(BaseModel):
+    id: int
+    order_type: str
+    quantity: int
+    address: Optional[str] = None
+    note: Optional[str] = None
+    status: str
+    created_at: datetime
+    # Admin-ийн /admin хуудсанд захиалагчийн БОДИТ картыг (CardPreview) болон
+    # QR-ийг шууд зурж харуулахын тулд бvтэн User болон QRDesign-ийг хамт
+    # буцаана.
+    user: UserResponse
+    qr_design: Optional[QRDesignResponse] = None
+
+    class Config:
+        from_attributes = True
 
 
 class AdminClaimRequest(BaseModel):
     secret: str
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { FaIdCard, FaThLarge, FaQrcode, FaPaintBrush, FaChartBar, FaSignOutAlt, FaUser } from 'react-icons/fa'
+import { FaIdCard, FaThLarge, FaQrcode, FaPaintBrush, FaChartBar, FaShieldAlt, FaSignOutAlt, FaUser } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 
 interface SidebarProps {
@@ -18,6 +18,8 @@ export default function Sidebar({ user }: SidebarProps) {
     { path: '/card', icon: FaQrcode, label: 'Миний Карт' },
     { path: '/design', icon: FaPaintBrush, label: 'QR Design' },
     { path: '/analytics', icon: FaChartBar, label: 'Статистик' },
+    // Зөвхөн admin эрхтэй хэрэглэгчид харагдана
+    ...(user?.is_admin ? [{ path: '/admin', icon: FaShieldAlt, label: 'Admin' }] : []),
   ]
 
   const handleLogout = () => {
