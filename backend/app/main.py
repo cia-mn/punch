@@ -63,6 +63,8 @@ app.add_middleware(
         "http://localhost:3001",
         "https://business-card-eight-ochre.vercel.app",  # Өмнөх screenshot дээрх Vercel URL
         "https://digital-business-card-orpin-psi.vercel.app",
+        "https://punch.mn",
+        "https://www.punch.mn",
         "*"  # Түр хугацаанд CORS алдааг бүрэн хаахын тулд (хэрэв хэрэгтэй бол)
     ],
     allow_credentials=True,
