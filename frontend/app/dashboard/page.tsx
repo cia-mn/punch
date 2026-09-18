@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaUserEdit } from 'react-icons/fa'
-import CardPreview from '../../../components/CardPreview'
-import { getCurrentUser, updateCurrentUser } from '../../../lib/api'
-import type { User, UserUpdate } from '../../../lib/types'
+import CardPreview from '../../components/CardPreview'
+import { getCurrentUser, updateCurrentUser } from '../../lib/api'
+import type { User, UserUpdate } from '../../lib/types'
 
 const emptyForm: UserUpdate = {
   name: '',

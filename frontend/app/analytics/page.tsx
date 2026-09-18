@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaChartBar, FaQrcode, FaMousePointer, FaUsers, FaSyncAlt } from 'react-icons/fa'
-import { getCurrentUser, getCardAnalytics } from '../../../lib/api'
-import type { CardAnalyticsSummary, User } from '../../../lib/types'
+import { getCurrentUser, getCardAnalytics } from '../../lib/api'
+import type { CardAnalyticsSummary, User } from '../../lib/types'
 
 const EMPTY_SUMMARY: CardAnalyticsSummary = {
   total_scans: 0,

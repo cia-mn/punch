@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaShieldAlt, FaSyncAlt, FaQrcode, FaIdCard, FaCopy, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa'
-import CardPreview from '../../../components/CardPreview'
-import QRCode from '../../../components/QRCode'
-import { getCurrentUser, getAllOrders, updateOrderStatus } from '../../../lib/api'
-import type { AdminOrderResponse, User } from '../../../lib/types'
+import CardPreview from '../../components/CardPreview'
+import QRCode from '../../components/QRCode'
+import { getCurrentUser, getAllOrders, updateOrderStatus } from '../../lib/api'
+import type { AdminOrderResponse, User } from '../../lib/types'
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Хvлээгдэж буй', icon: FaClock },

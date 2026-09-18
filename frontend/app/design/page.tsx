@@ -16,10 +16,10 @@ import PrintCardPreview, {
   loadPrintCardDesign,
   savePrintCardDesign,
   type PrintCardDesign,
-} from '../../../components/PrintCardPreview'
-import type { ExtendedQRDesign as QRDesignStyle, QRCodeHandle } from '../../../components/QRCode'
-import { getCurrentUser, getQRDesign, updateQRDesign } from '../../../lib/api'
-import type { QRDesign, User } from '../../../lib/types'
+} from '../../components/PrintCardPreview'
+import type { ExtendedQRDesign as QRDesignStyle, QRCodeHandle } from '../../components/QRCode'
+import { getCurrentUser, getQRDesign, updateQRDesign } from '../../lib/api'
+import type { QRDesign, User } from '../../lib/types'
 
 // QRCode компонентыг SSR унтрааж Dynamic-аар импортолж байна
 const QRCode = dynamic(() => import('../../components/QRCode'), {
