@@ -35,9 +35,6 @@ export default function AnalyticsPage() {
   const [summary, setSummary] = useState<CardAnalyticsSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  // Backend endpoint (`GET /api/card/analytics`) бэлэн болоогvй үед 404/500
-  // ирэхийг тусад нь таньж, "тохиргоо дутуу" гэдгийг зочинд бус эзэмшигчид
-  // ойлгомжтой байдлаар харуулна.
   const [backendMissing, setBackendMissing] = useState(false)
   const router = useRouter()
 
@@ -190,7 +187,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Сvvлийн товч дарсан үйлдлvvд */}
+          {/* Сvvлийн товч дарсан vйлдлvvд */}
           <div className="bg-white rounded-2xl p-6 shadow-sm mt-6">
             <h2 className="font-semibold text-dark mb-4">Сvvлийн vйлдлvvд</h2>
             {data.recent_clicks.length === 0 ? (

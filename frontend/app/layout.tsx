@@ -6,16 +6,10 @@ import Sidebar from '../../components/Sidebar'
 import { getCurrentUser } from '../../lib/api'
 import type { User } from '../../lib/types'
 
-// ЧУХАЛ: Sidebar-г ЭНД, ЗӨВХӨН НЭГ УДАА зурна. Өмнө нь /dashboard, /card,
-// /design, /analytics, /admin хуудас бvр өөрийн доторх Sidebar-г тусад нь
-// зурж, өөрийн дата ачаалж байх хугацаандаа бvтэн дэлгэцийн spinner
-// харуулж (Sidebar-г нуугаад) байсан тул хуудас солигдох бvрт Sidebar
-// устаж, дахин vvсдэг асуудал (харагдацаараа "давхарлаад, refresh хийгээд
-// байгаа юм шиг" мэдрэгддэг байсан) vvсгэж байв.
-//
-// Одоо Sidebar энэ shared layout-д байрлах тул хуудаснуудын хооронд
-// шилжихэд ЗӨВХӨН баруун талын агуулгын хэсэг (children) солигдоно —
-// Sidebar өөрөө unmount/remount хийгдэхгvй.
+// Sidebar-г ЭНД, ЗӨВХӨН НЭГ УДАА зурна. /dashboard, /card, /design,
+// /analytics, /admin хуудаснуудын хооронд шилжихэд ЗӨВХӨН баруун талын
+// агуулгын хэсэг (children) солигдоно — Sidebar unmount/remount хийгдэхгvй,
+// тиймээс "давхарлаад, дахин ачаалаад байгаа юм шиг" мэдрэгдэхгvй болно.
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)

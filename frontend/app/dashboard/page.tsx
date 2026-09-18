@@ -148,7 +148,7 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Хүйс</label>
+                  <label className={labelClass}>Хvйс</label>
                   <select
                     className={inputClass}
                     value={form.gender || ''}
