@@ -11,16 +11,15 @@ import {
   FaDownload,
   FaInfoCircle,
 } from 'react-icons/fa'
-import Sidebar from '../../components/Sidebar'
 import PrintCardPreview, {
   PRINT_CARD_DEFAULTS,
   loadPrintCardDesign,
   savePrintCardDesign,
   type PrintCardDesign,
-} from '../../components/PrintCardPreview'
-import type { ExtendedQRDesign as QRDesignStyle, QRCodeHandle } from '../../components/QRCode'
-import { getCurrentUser, getQRDesign, updateQRDesign } from '../../lib/api'
-import type { QRDesign, User } from '../../lib/types'
+} from '../../../components/PrintCardPreview'
+import type { ExtendedQRDesign as QRDesignStyle, QRCodeHandle } from '../../../components/QRCode'
+import { getCurrentUser, getQRDesign, updateQRDesign } from '../../../lib/api'
+import type { QRDesign, User } from '../../../lib/types'
 
 // QRCode компонентыг SSR унтрааж Dynamic-аар импортолж байна
 const QRCode = dynamic(() => import('../../components/QRCode'), {
@@ -197,7 +196,7 @@ export default function DesignPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
@@ -221,12 +220,7 @@ export default function DesignPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <div className="w-64 hidden md:block">
-        <Sidebar user={user} />
-      </div>
-      <div className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto">
           <h1 className="flex items-center gap-3 text-2xl font-bold text-dark mb-1">
             <FaPaintBrush className="text-primary" /> QR Дизайн тохиргоо
           </h1>
@@ -653,8 +647,6 @@ export default function DesignPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
     </div>
   )
 }

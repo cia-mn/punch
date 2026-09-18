@@ -4,11 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaShieldAlt, FaSyncAlt, FaQrcode, FaIdCard, FaCopy, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa'
-import Sidebar from '../../components/Sidebar'
-import CardPreview from '../../components/CardPreview'
-import QRCode from '../../components/QRCode'
-import { getCurrentUser, getAllOrders, updateOrderStatus } from '../../lib/api'
-import type { AdminOrderResponse, User } from '../../lib/types'
+import CardPreview from '../../../components/CardPreview'
+import QRCode from '../../../components/QRCode'
+import { getCurrentUser, getAllOrders, updateOrderStatus } from '../../../lib/api'
+import type { AdminOrderResponse, User } from '../../../lib/types'
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Хvлээгдэж буй', icon: FaClock },
@@ -116,7 +115,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
@@ -124,15 +123,10 @@ export default function AdminPage() {
 
   if (forbidden) {
     return (
-      <div className="min-h-screen bg-gray-100 flex">
-        <div className="w-64 hidden md:block">
-          <Sidebar user={user} />
-        </div>
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl p-8 shadow-sm text-center max-w-sm">
-            <FaShieldAlt className="text-3xl text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">Энэ хуудсанд хандах эрхгvй байна.</p>
-          </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="bg-white rounded-2xl p-8 shadow-sm text-center max-w-sm">
+          <FaShieldAlt className="text-3xl text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Энэ хуудсанд хандах эрхгvй байна.</p>
         </div>
       </div>
     )
@@ -141,12 +135,7 @@ export default function AdminPage() {
   const list = orders || []
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <div className="w-64 hidden md:block">
-        <Sidebar user={user} />
-      </div>
-      <div className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="flex items-center gap-3 text-2xl font-bold text-dark">
               <FaShieldAlt className="text-primary" /> Admin — Захиалгууд
@@ -250,8 +239,6 @@ export default function AdminPage() {
               ))}
             </div>
           )}
-        </div>
-      </div>
     </div>
   )
 }

@@ -4,13 +4,12 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { FaThLarge, FaCopy, FaBoxOpen, FaQrcode, FaIdCard, FaTimes, FaMobileAlt, FaCheckCircle } from 'react-icons/fa'
-import Sidebar from '../../components/Sidebar'
-import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../components/CardPreview'
-import QRCode from '../../components/QRCode'
-import PrintCardPreview from '../../components/PrintCardPreview'
-import { getCardData, getQRDesign, updateCardDesign, createCardOrder } from '../../lib/api'
-import type { CardData, CardOrderType, QRSubtype, CardOrientation } from '../../lib/types'
-import { ORDER_PRICES } from '../../lib/types'
+import CardPreview, { CARD_DESIGNS, type CardDesign } from '../../../components/CardPreview'
+import QRCode from '../../../components/QRCode'
+import PrintCardPreview from '../../../components/PrintCardPreview'
+import { getCardData, getQRDesign, updateCardDesign, createCardOrder } from '../../../lib/api'
+import type { CardData, CardOrderType, QRSubtype, CardOrientation } from '../../../lib/types'
+import { ORDER_PRICES } from '../../../lib/types'
 
 const DESIGN_STORAGE_KEY = 'card_design'
 
@@ -189,19 +188,15 @@ export default function CardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <div className="w-64 hidden md:block">
-        <Sidebar user={data?.user} />
-      </div>
-      <div className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto">
+    <>
+    <div className="max-w-6xl mx-auto">
           <h1 className="flex items-center gap-3 text-2xl font-bold text-dark mb-6">
             <FaThLarge className="text-primary" /> Миний Карт &amp; QR
           </h1>
@@ -309,8 +304,7 @@ export default function CardPage() {
               </button>
             </div>
           </div>
-        </div>
-      </div>
+    </div>
 
       {/* Захиалгын modal */}
       {orderModalOpen && (
@@ -529,6 +523,6 @@ export default function CardPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
